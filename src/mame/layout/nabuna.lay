@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<!--
+license:CC0
+-->
+<mamelayout version="2">
+	<element name="red" defstate="0">
+		<rect state="1">
+			<color red="0.75" green="0.0" blue="0.0" />
+		</rect>
+		<rect state="0">
+			<color red="0.20" green="0.0" blue="0.0" />
+		</rect>
+	</element>
+	<element name="green" defstate="0">
+		<rect state="1">
+			<color red="0.0" green="0.75" blue="0.0" />
+		</rect>
+		<rect state="0">
+			<color red="0.0" green="0.20" blue="0.0" />
+		</rect>
+	</element>
+
+	<element name="power">
+		<text string="POWER">
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+	</element>
+	<element name="cable">
+		<text string="CABLE">
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+	</element>
+	<element name="link">
+		<text string="LINK">
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+	</element>
+	<element name="message">
+		<text string="MESSAGE">
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+	</element>
+
+	<view name="Default Layout">
+		<element name="na2_led0" ref="green">
+			<bounds x="30" y="10" width="5" height="15" />
+		</element>
+
+		<element name="na2_led1" ref="green">
+			<bounds x="70" y="10" width="5" height="15" />
+		</element>
+
+		<element name="na2_led2" ref="green">
+			<bounds x="110" y="10" width="5" height="15" />
+		</element>
+
+		<element name="na2_led3" ref="red">
+			<bounds x="150" y="10" width="5" height="15" />
+		</element>
+
+		<element name="label1" ref="power">
+			<bounds x="20" y="27" width="25" height="10" />
+		</element>
+
+		<element name="label2" ref="cable">
+			<bounds x="60" y="27" width="25" height="10" />
+		</element>
+
+		<element name="label3" ref="link">
+			<bounds x="100" y="27" width="25" height="10" />
+		</element>
+
+		<element name="label4" ref="message">
+			<bounds x="138" y="27" width="30" height="10" />
+		</element>
+	</view>
+</mamelayout>

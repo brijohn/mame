@@ -197,5 +197,13 @@ generic_fifo_u32_device::generic_fifo_u32_device(const machine_config &mconfig, 
 {
 }
 
+template class generic_fifo_device_base<u8>;
+
+generic_fifo_u8_device::generic_fifo_u8_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	generic_fifo_device_base<u8>(mconfig, GENERIC_FIFO_U8, tag, owner, clock)
+{
+}
+
+DEFINE_DEVICE_TYPE(GENERIC_FIFO_U8, generic_fifo_u8_device, "generic_fifo_u8_device", "Generic fifo, u8 values")
 DEFINE_DEVICE_TYPE(GENERIC_FIFO_U32, generic_fifo_u32_device, "generic_fifo_u32_device", "Generic fifo, u32 values")
 

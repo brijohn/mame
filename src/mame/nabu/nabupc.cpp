@@ -9,6 +9,7 @@
 #include "bus/nabu/adapter.h"
 #include "bus/nabu/ctrl/hlekeyboard.h"
 #include "bus/nabu/ctrl/keyboard.h"
+#include "bus/nabu/na2.h"
 #include "bus/nabu/video/video.h"
 #include "bus/rs232/null_modem.h"
 #include "bus/rs232/pty.h"
@@ -54,6 +55,7 @@ static void hcca_devices(device_slot_interface &device)
 	device.option_add("null_modem",    NULL_MODEM);
 	device.option_add("hcca_local",    NABU_NETWORK_LOCAL_ADAPTER);
 	device.option_add("hcca_remote",   NABU_NETWORK_REMOTE_ADAPTER);
+	device.option_add("hcca_na2",      NABU_NETWORK_NA2_ADAPTER);
 }
 
 static void keyboard_devices(device_slot_interface &device)

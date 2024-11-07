@@ -212,6 +212,18 @@ public:
 	void write(u32 data) { write_gen(data); }
 };
 
+class generic_fifo_u8_device : public generic_fifo_device_base<u8>
+{
+public:
+	generic_fifo_u8_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	virtual ~generic_fifo_u8_device() = default;
+
+	u8 read() { return read_gen<u8>(); }
+	void write(u8 data) { write_gen(data); }
+};
+
+DECLARE_DEVICE_TYPE(GENERIC_FIFO_U8, generic_fifo_u8_device)
+
 DECLARE_DEVICE_TYPE(GENERIC_FIFO_U32, generic_fifo_u32_device)
 
 #endif

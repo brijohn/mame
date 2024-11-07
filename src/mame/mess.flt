@@ -521,6 +521,7 @@ multitech/mpf1.cpp
 mupid/mdisk.cpp
 mupid/mupid2.cpp
 nabu/nabupc.cpp
+nabu/nabuna.cpp
 nakajima/nakajies.cpp
 nascom/nascom1.cpp
 natsemi/ns32kdb.cpp

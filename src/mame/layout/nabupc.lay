@@ -28,6 +28,62 @@ license:CC0
 		</rect>
 	</element>
 
+	<element name="na2_green" defstate="0">
+		<rect state="1">
+			<color red="0.0" green="0.75" blue="0.0" />
+		</rect>
+		<rect state="0">
+			<color red="0.0" green="0.0" blue="0.0" alpha="0.0" />
+		</rect>
+	</element>
+	<element name="na2_red" defstate="0">
+		<rect state="1">
+			<color red="0.75" green="0.0" blue="0.0" />
+		</rect>
+		<rect state="0">
+			<color red="0.0" green="0.0" blue="0.0" alpha="0.0" />
+		</rect>
+	</element>
+
+	<element name="na2_panel" defstate="0">
+		<rect state="1">
+			<bounds x="0" y="0" width="170" height="29" />
+			<color red="0.0" green="0.0" blue="0.0" alpha="0.0" />
+		</rect>
+		<rect state="1">
+			<bounds x="10" y="2" width="5" height="15" />
+			<color red="0.0" green="0.20" blue="0.0" />
+		</rect>
+		<rect state="1">
+			<bounds x="50" y="2" width="5" height="15" />
+			<color red="0.0" green="0.20" blue="0.0" />
+		</rect>
+		<rect state="1">
+			<bounds x="90" y="2" width="5" height="15" />
+			<color red="0.0" green="0.20" blue="0.0" />
+		</rect>
+		<rect state="1">
+			<bounds x="130" y="2" width="5" height="15" />
+			<color red="0.20" green="0.0" blue="0.0" />
+		</rect>
+		<text string="POWER" state="1">
+			<bounds x="0" y="19" width="25" height="9" />
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+		<text string="CABLE" state="1">
+			<bounds x="40" y="19" width="25" height="9" />
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+		<text string="LINK" state="1">
+			<bounds x="82" y="19" width="20" height="9" />
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+		<text string="MESSAGE" state="1">
+			<bounds x="118" y="19" width="30" height="9" />
+			<color red="1.0" green="1.0" blue="1.0" />
+		</text>
+	</element>
+
 	<element name="power">
 		<text string="ON">
 			<color red="1.0" green="1.0" blue="1.0" />
@@ -84,6 +140,22 @@ license:CC0
 
 		<element name="label4" ref="check">
 			<bounds x="115" y="17" width="15" height="13" />
+		</element>
+
+		<element ref="na2_panel" name="na2_led0">
+			<bounds x="620" y="1" width="170" height="29" />
+		</element>
+		<element name="na2_led0" ref="na2_green">
+			<bounds x="630" y="3" width="5" height="15" />
+		</element>
+		<element name="na2_led1" ref="na2_green">
+			<bounds x="670" y="3" width="5" height="15" />
+		</element>
+		<element name="na2_led2" ref="na2_green">
+			<bounds x="710" y="3" width="5" height="15" />
+		</element>
+		<element name="na2_led3" ref="na2_red">
+			<bounds x="750" y="3" width="5" height="15" />
 		</element>
 
 	</view>
