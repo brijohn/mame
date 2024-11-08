@@ -2,8 +2,8 @@
 // copyright-holders:Brian Johnson
 
 
-#ifndef MAME_BUS_NABU_KBD_H
-#define MAME_BUS_NABU_KBD_H
+#ifndef MAME_BUS_NABU_CTRL_KEYBOARD_H
+#define MAME_BUS_NABU_CTRL_KEYBOARD_H
 
 #pragma once
 
@@ -11,7 +11,9 @@
 #include "cpu/m6800/m6801.h"
 #include "machine/adc0808.h"
 
-namespace bus::nabu::keyboard {
+#include "ctrl.h"
+
+namespace bus::nabu::ctrl {
 
 class nabu_keyboard_device: public device_t, public device_rs232_port_interface
 {
@@ -33,6 +35,15 @@ private:
 	void irq_w(uint8_t data);
 
 	uint8_t gameport_r(offs_t offset);
+
+	template <unsigned Port> uint8_t potx_r() {
+		return m_gameport[Port]->read_potx();
+	}
+
+	template <unsigned Port> uint8_t poty_r() {
+		return m_gameport[Port]->read_poty();
+	}
+
 	uint8_t adc_data_r();
 	void adc_latch_w(offs_t offset, uint8_t data);
 	void adc_start_w(offs_t offset, uint8_t data);
@@ -43,14 +54,14 @@ private:
 
 	required_ioport m_modifiers;
 	required_ioport_array<8> m_keyboard;
-	required_ioport_array<4> m_gameport;
+	required_device_array<nabu_controller_port_device, 4> m_gameport;
 
 	uint8_t m_port1;
 	uint8_t m_eoc;
 };
 
-} // namespace bus::nabu::keyboard
+} // namespace bus::nabu::ctrl
 
-DECLARE_DEVICE_TYPE_NS(NABU_KBD, bus::nabu::keyboard, nabu_keyboard_device)
+DECLARE_DEVICE_TYPE_NS(NABU_KBD, bus::nabu::ctrl, nabu_keyboard_device)
 
 #endif

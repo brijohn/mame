@@ -7,8 +7,8 @@
 #include "nabupc.h"
 
 #include "bus/nabu/adapter.h"
-#include "bus/nabu/keyboard/hlekeyboard.h"
-#include "bus/nabu/keyboard/nabu_kbd.h"
+#include "bus/nabu/ctrl/hlekeyboard.h"
+#include "bus/nabu/ctrl/keyboard.h"
 #include "bus/nabu/video/video.h"
 #include "bus/rs232/null_modem.h"
 #include "bus/rs232/pty.h"

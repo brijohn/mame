@@ -1,8 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Brian Johnson
 
-#ifndef MAME_BUS_NABU_KEYBOARD_HLE_H
-#define MAME_BUS_NABU_KEYBOARD_HLE_H
+#ifndef MAME_BUS_NABU_CTRL_HLE_H
+#define MAME_BUS_NABU_CTRL_HLE_H
 
 #pragma once
 
@@ -10,7 +10,7 @@
 #include "machine/keyboard.h"
 #include "diserial.h"
 
-namespace bus::nabu::keyboard {
+namespace bus::nabu::ctrl {
 
 class hle_keyboard_device
 	: public device_t
@@ -64,6 +64,6 @@ private:
 
 }
 
-DECLARE_DEVICE_TYPE_NS(NABU_HLE_KEYBOARD, bus::nabu::keyboard, hle_keyboard_device)
+DECLARE_DEVICE_TYPE_NS(NABU_HLE_KEYBOARD, bus::nabu::ctrl, hle_keyboard_device)
 
 #endif

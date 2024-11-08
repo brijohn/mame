@@ -6,9 +6,9 @@
 
 #include "machine/keyboard.ipp"
 
-DEFINE_DEVICE_TYPE(NABU_HLE_KEYBOARD, bus::nabu::keyboard::hle_keyboard_device, "nabu_hle_kbd", "NABU PC Keyboard (HLE)")
+DEFINE_DEVICE_TYPE(NABU_HLE_KEYBOARD, bus::nabu::ctrl::hle_keyboard_device, "nabu_hle_kbd", "NABU PC Keyboard (HLE)")
 
-namespace bus::nabu::keyboard {
+namespace bus::nabu::ctrl {
 
 namespace {
 	uint8_t const TRANSLATION_TABLE[3][16][4] =

@@ -45,12 +45,12 @@
  *****************************************************************************/
 
 #include "emu.h"
-#include "nabu_kbd.h"
+#include "keyboard.h"
 
 
-DEFINE_DEVICE_TYPE(NABU_KBD, bus::nabu::keyboard::nabu_keyboard_device, "nabu_kb", "NABU PC keyboard")
+DEFINE_DEVICE_TYPE(NABU_KBD, bus::nabu::ctrl::nabu_keyboard_device, "nabu_kb", "NABU PC keyboard")
 
-namespace bus::nabu::keyboard {
+namespace bus::nabu::ctrl {
 
 ROM_START(nabu_kb)
 	ROM_REGION( 0x800, "mcu", 0 )
@@ -141,62 +141,6 @@ static INPUT_PORTS_START( keyboard_ports )
 	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_UNUSED)
 	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_UNUSED)
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_UNUSED)
-
-	// Joystick Ports
-	PORT_START("JOYSTICK1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)        PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)           PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)               PORT_CODE(INPUT_CODE_INVALID)
-	PORT_START("JOYSTICK2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)        PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)           PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)               PORT_CODE(INPUT_CODE_INVALID)
-	PORT_START("JOYSTICK3")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(3)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)        PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(3)           PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)               PORT_CODE(INPUT_CODE_INVALID)
-	PORT_START("JOYSTICK4")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(4)         PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)        PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(4)           PORT_CODE(INPUT_CODE_INVALID)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)               PORT_CODE(INPUT_CODE_INVALID)
-
-	// Analog Paddles
-	PORT_START("PADDLE1")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(1) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 9
-	PORT_START("PADDLE2")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(2) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 5
-	PORT_START("PADDLE3")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(3) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 9
-	PORT_START("PADDLE4")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(4) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 5
-	PORT_START("PADDLE5")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(5) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 9
-	PORT_START("PADDLE6")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(6) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 5
-	PORT_START("PADDLE7")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(7) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 9
-	PORT_START("PADDLE8")
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_PLAYER(8) PORT_SENSITIVITY(30) PORT_KEYDELTA(20) PORT_MINMAX(0, 255) PORT_CODE(INPUT_CODE_INVALID) PORT_CODE_DEC(INPUT_CODE_INVALID) PORT_CODE_INC(INPUT_CODE_INVALID) // pin 5
 INPUT_PORTS_END
 
 nabu_keyboard_device::nabu_keyboard_device(machine_config const &mconfig, char const *tag, device_t *owner, uint32_t clock)
@@ -206,7 +150,7 @@ nabu_keyboard_device::nabu_keyboard_device(machine_config const &mconfig, char c
 	, m_adc(*this, "adc")
 	, m_modifiers(*this, "MODIFIERS")
 	, m_keyboard(*this, "ROW%u", 0U)
-	, m_gameport(*this, "JOYSTICK%u", 1U)
+	, m_gameport(*this, "port%u", 1U)
 	, m_port1(0)
 	, m_eoc(0)
 {
@@ -234,14 +178,20 @@ void nabu_keyboard_device::device_add_mconfig(machine_config &config)
 
 	ADC0809(config, m_adc, 3.579545_MHz_XTAL / 4);
 	m_adc->eoc_callback().set(FUNC(nabu_keyboard_device::irq_w));
-	m_adc->in_callback<0>().set_ioport("PADDLE1");
-	m_adc->in_callback<1>().set_ioport("PADDLE2");
-	m_adc->in_callback<2>().set_ioport("PADDLE3");
-	m_adc->in_callback<3>().set_ioport("PADDLE4");
-	m_adc->in_callback<4>().set_ioport("PADDLE5");
-	m_adc->in_callback<5>().set_ioport("PADDLE6");
-	m_adc->in_callback<6>().set_ioport("PADDLE7");
-	m_adc->in_callback<7>().set_ioport("PADDLE8");
+
+	m_adc->in_callback<0>().set(FUNC(nabu_keyboard_device::potx_r<0>));
+	m_adc->in_callback<1>().set(FUNC(nabu_keyboard_device::poty_r<0>));
+	m_adc->in_callback<2>().set(FUNC(nabu_keyboard_device::potx_r<1>));
+	m_adc->in_callback<3>().set(FUNC(nabu_keyboard_device::poty_r<1>));
+	m_adc->in_callback<4>().set(FUNC(nabu_keyboard_device::potx_r<2>));
+	m_adc->in_callback<5>().set(FUNC(nabu_keyboard_device::poty_r<2>));
+	m_adc->in_callback<6>().set(FUNC(nabu_keyboard_device::potx_r<3>));
+	m_adc->in_callback<7>().set(FUNC(nabu_keyboard_device::poty_r<3>));
+
+	NABU_CONTROLLER_PORT(config, m_gameport[0], nabu_controller_port_devices, "joystick");
+	NABU_CONTROLLER_PORT(config, m_gameport[1], nabu_controller_port_devices, "joystick");
+	NABU_CONTROLLER_PORT(config, m_gameport[2], nabu_controller_port_devices, nullptr);
+	NABU_CONTROLLER_PORT(config, m_gameport[3], nabu_controller_port_devices, nullptr);
 }
 
 void nabu_keyboard_device::nabu_kb_mem(address_map &map)
@@ -299,7 +249,7 @@ void nabu_keyboard_device::irq_w(uint8_t data)
 uint8_t nabu_keyboard_device::gameport_r(offs_t offset)
 {
 	uint8_t port = (offset >> 8) & 0x03;
-	return m_gameport[port]->read();
+	return m_gameport[port]->read_joy();
 }
 
 void nabu_keyboard_device::adc_latch_w(offs_t offset, uint8_t data)
@@ -324,4 +274,4 @@ uint8_t nabu_keyboard_device::adc_data_r()
 	return m_adc->data_r();
 }
 
-} // bus::nabu::keyboard
+} // bus::nabu::ctrl

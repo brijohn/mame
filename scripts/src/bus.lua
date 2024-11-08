@@ -5098,15 +5098,21 @@ end
 
 ---------------------------------------------------
 --
---@src/devices/bus/nabu/keyboard/nabu_kbd.h,BUSES["NABU_KEYBOARD"] = true
+--@src/devices/bus/nabu/ctrl/keyboard.h,BUSES["NABU_CTRL"] = true
 ---------------------------------------------------
 
-if (BUSES["NABU_KEYBOARD"]~=null) then
+if (BUSES["NABU_CTRL"]~=null) then
 	files {
-		MAME_DIR .. "src/devices/bus/nabu/keyboard/nabu_kbd.cpp",
-		MAME_DIR .. "src/devices/bus/nabu/keyboard/nabu_kbd.h",
-		MAME_DIR .. "src/devices/bus/nabu/keyboard/hlekeyboard.cpp",
-		MAME_DIR .. "src/devices/bus/nabu/keyboard/hlekeyboard.h",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/ctrl.cpp",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/ctrl.h",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/joystick.cpp",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/joystick.h",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/keyboard.cpp",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/keyboard.h",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/paddle.cpp",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/paddle.h",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/hlekeyboard.cpp",
+		MAME_DIR .. "src/devices/bus/nabu/ctrl/hlekeyboard.h",
 	}
 end
 
