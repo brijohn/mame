@@ -52,7 +52,7 @@ ioport_constructor nabu_paddle_device::device_input_ports() const
 
 nabu_paddle_device::nabu_paddle_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
 	device_t(mconfig, NABU_PADDLE, tag, owner, clock),
-	device_nabu_controller_port_interface(mconfig, *this),
+	device_vcs_control_port_interface(mconfig, *this),
 	m_joy(*this, "JOYSTICK"),
 	m_potx(*this, "POTX"),
 	m_poty(*this, "POTY")
@@ -73,7 +73,7 @@ void nabu_paddle_device::device_start()
 //  joy_r - joystick read
 //-------------------------------------------------
 
-uint8_t nabu_paddle_device::joy_r()
+uint8_t nabu_paddle_device::vcs_joy_r()
 {
 	return m_joy->read();
 }
@@ -83,7 +83,7 @@ uint8_t nabu_paddle_device::joy_r()
 //  potx_r - potentiometer X read
 //-------------------------------------------------
 
-uint8_t nabu_paddle_device::potx_r()
+uint8_t nabu_paddle_device::vcs_pot_x_r()
 {
 	return m_potx->read();
 }
@@ -93,7 +93,7 @@ uint8_t nabu_paddle_device::potx_r()
 //  poty_r - potentiometer Y read
 //-------------------------------------------------
 
-uint8_t nabu_paddle_device::poty_r()
+uint8_t nabu_paddle_device::vcs_pot_y_r()
 {
 	return m_poty->read();
 }

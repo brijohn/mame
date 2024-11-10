@@ -5103,8 +5103,6 @@ end
 
 if (BUSES["NABU_CTRL"]~=null) then
 	files {
-		MAME_DIR .. "src/devices/bus/nabu/ctrl/ctrl.cpp",
-		MAME_DIR .. "src/devices/bus/nabu/ctrl/ctrl.h",
 		MAME_DIR .. "src/devices/bus/nabu/ctrl/joystick.cpp",
 		MAME_DIR .. "src/devices/bus/nabu/ctrl/joystick.h",
 		MAME_DIR .. "src/devices/bus/nabu/ctrl/keyboard.cpp",

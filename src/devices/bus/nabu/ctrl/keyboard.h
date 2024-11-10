@@ -11,7 +11,7 @@
 #include "cpu/m6800/m6801.h"
 #include "machine/adc0808.h"
 
-#include "ctrl.h"
+#include "bus/vcs_ctrl/ctrl.h"
 
 namespace bus::nabu::ctrl {
 
@@ -37,11 +37,11 @@ private:
 	uint8_t gameport_r(offs_t offset);
 
 	template <unsigned Port> uint8_t potx_r() {
-		return m_gameport[Port]->read_potx();
+		return m_gameport[Port]->read_pot_x();
 	}
 
 	template <unsigned Port> uint8_t poty_r() {
-		return m_gameport[Port]->read_poty();
+		return m_gameport[Port]->read_pot_y();
 	}
 
 	uint8_t adc_data_r();
@@ -54,11 +54,13 @@ private:
 
 	required_ioport m_modifiers;
 	required_ioport_array<8> m_keyboard;
-	required_device_array<nabu_controller_port_device, 4> m_gameport;
+	required_device_array<vcs_control_port_device, 4> m_gameport;
 
 	uint8_t m_port1;
 	uint8_t m_eoc;
 };
+
+void nabu_controller_port_devices(device_slot_interface &device);
 
 } // namespace bus::nabu::ctrl
 

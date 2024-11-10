@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "ctrl.h"
+#include "bus/vcs_ctrl/ctrl.h"
 
 
 namespace bus::nabu::ctrl {
@@ -17,19 +17,19 @@ namespace bus::nabu::ctrl {
 
 // ======================> nabu_paddle_device
 
-class nabu_paddle_device : public device_t, public device_nabu_controller_port_interface
+class nabu_paddle_device : public device_t, public device_vcs_control_port_interface
 {
 public:
 	// construction/destruction
 	nabu_paddle_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 
 	// device_nabu_controller_port_interface overrides
-	virtual uint8_t joy_r() override;
-	virtual uint8_t potx_r() override;
-	virtual uint8_t poty_r() override;
+	virtual uint8_t vcs_joy_r() override;
+	virtual uint8_t vcs_pot_x_r() override;
+	virtual uint8_t vcs_pot_y_r() override;
 
-	virtual bool has_potx() override { return true; }
-	virtual bool has_poty() override { return true; }
+	virtual bool has_pot_x() override { return true; }
+	virtual bool has_pot_y() override { return true; }
 
 protected:
 	// device-level overrides

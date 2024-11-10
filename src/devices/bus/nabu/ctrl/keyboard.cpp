@@ -47,6 +47,9 @@
 #include "emu.h"
 #include "keyboard.h"
 
+#include "joystick.h"
+#include "paddle.h"
+
 
 DEFINE_DEVICE_TYPE(NABU_KBD, bus::nabu::ctrl::nabu_keyboard_device, "nabu_kb", "NABU PC keyboard")
 
@@ -188,10 +191,10 @@ void nabu_keyboard_device::device_add_mconfig(machine_config &config)
 	m_adc->in_callback<6>().set(FUNC(nabu_keyboard_device::potx_r<3>));
 	m_adc->in_callback<7>().set(FUNC(nabu_keyboard_device::poty_r<3>));
 
-	NABU_CONTROLLER_PORT(config, m_gameport[0], nabu_controller_port_devices, "joystick");
-	NABU_CONTROLLER_PORT(config, m_gameport[1], nabu_controller_port_devices, "joystick");
-	NABU_CONTROLLER_PORT(config, m_gameport[2], nabu_controller_port_devices, nullptr);
-	NABU_CONTROLLER_PORT(config, m_gameport[3], nabu_controller_port_devices, nullptr);
+	VCS_CONTROL_PORT(config, m_gameport[0], nabu_controller_port_devices, "joystick");
+	VCS_CONTROL_PORT(config, m_gameport[1], nabu_controller_port_devices, "joystick");
+	VCS_CONTROL_PORT(config, m_gameport[2], nabu_controller_port_devices, nullptr);
+	VCS_CONTROL_PORT(config, m_gameport[3], nabu_controller_port_devices, nullptr);
 }
 
 void nabu_keyboard_device::nabu_kb_mem(address_map &map)
@@ -272,6 +275,13 @@ void nabu_keyboard_device::cpu_ack_irq_w(offs_t offset, uint8_t data)
 uint8_t nabu_keyboard_device::adc_data_r()
 {
 	return m_adc->data_r();
+}
+
+void nabu_controller_port_devices(device_slot_interface &device)
+{
+	device.option_add("joystick", NABU_JOYSTICK);
+	device.option_add("3btn_joystick", NABU_EXT_JOYSTICK);
+	device.option_add("paddle", NABU_PADDLE);
 }
 
 } // bus::nabu::ctrl
