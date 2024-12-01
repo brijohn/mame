@@ -460,6 +460,8 @@ ROM_START( nabupc )
 	ROMX_LOAD( "nabupc-u53-90020060-revb-2764.bin", 0x0000, 0x2000, CRC(3088f21b) SHA1(bf2f1eb5d9f5a8e9d022ce0056f2a5a8526b830e), ROM_BIOS(3) )
 	ROM_SYSTEM_BIOS( 4, "ver29", "8k BIOS - Floppy support (Ver 29)" )
 	ROMX_LOAD( "nabupc-u53-90037150-ver29-2764.bin", 0x0000, 0x2000, CRC(3c484e3d) SHA1(dd10ad6e0a59c54561335272d3c808b0543ba0ef), ROM_BIOS(4) )
+	ROM_SYSTEM_BIOS( 5, "opennabu", "OpenNabu IPL v0.6.5" )
+	ROMX_LOAD( "opennabu.bin", 0x0000, 0x1000, CRC(d1c5e616) SHA1(f760a4f3899aab026eca2c357e836574ab442325), ROM_BIOS(5) )
 ROM_END
 
 /***************************************************************************
