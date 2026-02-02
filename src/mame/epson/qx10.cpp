@@ -44,6 +44,7 @@
 #include "machine/am9517a.h"
 #include "machine/i8255.h"
 #include "machine/mc146818.h"
+#include "machine/nvram.h"
 #include "machine/output_latch.h"
 #include "machine/pic8259.h"
 #include "machine/pit8253.h"
@@ -95,6 +96,7 @@ public:
 		m_maincpu(*this, "maincpu"),
 		m_screen(*this, "screen"),
 		m_ram(*this, RAM_TAG),
+		m_nvram(*this, "cmos"),
 		m_palette(*this, "palette"),
 		m_ram_view(*this, "ramview")
 	{
@@ -183,6 +185,7 @@ private:
 	required_device<cpu_device> m_maincpu;
 	required_device<screen_device> m_screen;
 	required_device<ram_device> m_ram;
+	required_device<nvram_device> m_nvram;
 	required_device<palette_device> m_palette;
 
 	/* FDD */
@@ -795,6 +798,7 @@ INPUT_PORTS_END
 void qx10_state::machine_start()
 {
 	m_bus->set_memview(m_ram_view[1]);
+	m_nvram->set_base(m_cmosram, 0x800);
 }
 
 void qx10_state::machine_reset()
@@ -1015,6 +1019,7 @@ void qx10_state::qx10(machine_config &config)
 
 	/* internal ram */
 	RAM(config, RAM_TAG).set_default_size("256K");
+	NVRAM(config, m_nvram, nvram_device::DEFAULT_NONE);
 
 	EPSON_QX_OPTION_BUS(config, m_bus, MAIN_CLK / 4);
 	m_dma_1->out_iow_callback<2>().set(m_bus, FUNC(bus::epson_qx::option_bus_device::dackf_w));
