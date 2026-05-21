@@ -68,6 +68,8 @@ protected:
 class qx_gdc_mono_card_device : public qx_gdc_card_device
 {
 protected:
+	static constexpr size_t VRAM_SIZE = 0x20000;
+
 	qx_gdc_mono_card_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 
 	virtual void palette_init(palette_device &palette) const override;
@@ -85,6 +87,8 @@ protected:
 class qx_gdc_color_card_device : public qx_gdc_card_device
 {
 protected:
+	static constexpr size_t VRAM_SIZE = 0x60000;
+
 	qx_gdc_color_card_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock);
 
 	virtual void device_start() override ATTR_COLD;

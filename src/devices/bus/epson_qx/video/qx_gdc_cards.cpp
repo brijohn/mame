@@ -185,7 +185,7 @@ UPD7220_DRAW_TEXT_LINE_MEMBER(qx_gdc_card_device::hgdc_draw_text)
 //**************************************************************************
 
 qx_gdc_mono_card_device::qx_gdc_mono_card_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: qx_gdc_card_device(mconfig, type, tag, owner, clock, 0x20000)
+	: qx_gdc_card_device(mconfig, type, tag, owner, clock, VRAM_SIZE)
 {
 }
 
@@ -227,7 +227,7 @@ UPD7220_DISPLAY_PIXELS_MEMBER(qx_gdc_mono_card_device::hgdc_display_pixels)
 //**************************************************************************
 
 qx_gdc_color_card_device::qx_gdc_color_card_device(const machine_config &mconfig, device_type type, const char *tag, device_t *owner, uint32_t clock)
-	: qx_gdc_card_device(mconfig, type, tag, owner, clock, 0x60000)
+	: qx_gdc_card_device(mconfig, type, tag, owner, clock, VRAM_SIZE)
 	, m_vram_bank(*this, "vrambank")
 	, m_vram_bank_val(0)
 {
