@@ -176,6 +176,7 @@ protected:
 
 	virtual void track_changed();
 	virtual void setup_characteristics() = 0;
+	virtual int track_step_amount() const { return 1; }
 
 	void init_floppy_load(bool write_supported);
 
@@ -322,6 +323,28 @@ DECLARE_FLOPPY_IMAGE_DEVICE(FLOPPY_8_DSDD,       floppy_8_dsdd,       "floppy_8"
 DECLARE_FLOPPY_IMAGE_DEVICE(EPSON_SMD_165,       epson_smd_165,       "floppy_3_5")
 DECLARE_FLOPPY_IMAGE_DEVICE(EPSON_SD_320,        epson_sd_320,        "floppy_5_25")
 DECLARE_FLOPPY_IMAGE_DEVICE(EPSON_SD_321,        epson_sd_321,        "floppy_5_25")
+
+class epson_sd_543 : public floppy_image_device
+{
+public:
+	epson_sd_543(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+	virtual ~epson_sd_543();
+	virtual const char *image_interface() const noexcept override { return "floppy_5_25"; }
+
+	void tpi_mode_w(int state);
+
+protected:
+	virtual void device_start() override ATTR_COLD;
+	virtual void device_reset() override ATTR_COLD;
+	virtual void setup_characteristics() override;
+	virtual int track_step_amount() const override { return m_mode ? 1 : 2; }
+
+private:
+	uint8_t m_mode;
+};
+
+DECLARE_DEVICE_TYPE(EPSON_SD_543, epson_sd_543)
+
 DECLARE_FLOPPY_IMAGE_DEVICE(PANA_JU_363,         pana_ju_363,         "floppy_3_5")
 DECLARE_FLOPPY_IMAGE_DEVICE(PANA_JU_386,         pana_ju_386,         "floppy_3_5")
 DECLARE_FLOPPY_IMAGE_DEVICE(SONY_OA_D31V,        sony_oa_d31v,        "floppy_3_5")

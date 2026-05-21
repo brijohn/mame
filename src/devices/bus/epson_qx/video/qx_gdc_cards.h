@@ -33,6 +33,7 @@ protected:
 	virtual const tiny_rom_entry *device_rom_region() const override ATTR_COLD;
 
 	// device_qx_video_interface
+	virtual void install_io(address_space &space) override ATTR_COLD;
 	virtual uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect) override;
 	virtual uint8_t dack_r() override { return m_hgdc->dack_r(); }
 	virtual void dack_w(uint8_t data) override { m_hgdc->dack_w(data); }
@@ -48,8 +49,9 @@ protected:
 
 	void id_map(address_map &map) ATTR_COLD;
 	void gdc_map(address_map &map) ATTR_COLD;
-	void zoom_map(address_map &map) ATTR_COLD;
-	void zoom_w(uint8_t data) { m_zoom = data & 0x0f; }
+	void ctrl_map(address_map &map) ATTR_COLD;
+	virtual void zoom_w(uint8_t data) { m_zoom = data & 0x0f; }
+	uint8_t lightpen_r() { return 0xff; }  // TODO: light pen request
 
 	required_device<upd7220_device> m_hgdc;
 	required_device<screen_device> m_screen;
@@ -93,6 +95,7 @@ protected:
 
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
+	virtual void install_io(address_space &space) override ATTR_COLD;
 
 	virtual void palette_init(palette_device &palette) const override;
 	virtual void upd7220_map(address_map &map) override ATTR_COLD;
@@ -126,10 +129,46 @@ public:
 	q10cms_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
 };
 
+class q16gms_device : public qx_gdc_mono_card_device
+{
+public:
+	q16gms_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+protected:
+	virtual void device_start() override ATTR_COLD;
+	virtual void device_reset() override ATTR_COLD;
+	virtual void zoom_w(uint8_t data) override;
+	virtual bool enabled() const override { return !m_stop; }
+
+private:
+	bool m_stop = false;
+};
+
+class q16cms_device : public qx_gdc_color_card_device
+{
+public:
+	q16cms_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock);
+
+protected:
+	virtual void device_start() override ATTR_COLD;
+	virtual void device_reset() override ATTR_COLD;
+	virtual void zoom_w(uint8_t data) override;
+	virtual bool enabled() const override { return !m_stop; }
+
+private:
+	bool m_stop = false;
+};
+
+
+void qx10_video_cards(device_slot_interface &device);
+void qx16_video_cards(device_slot_interface &device);
+
 } // namespace bus::epson_qx::video
 
 
 DECLARE_DEVICE_TYPE_NS(QX10_VIDEO_GMS, bus::epson_qx::video, q10gms_device)
 DECLARE_DEVICE_TYPE_NS(QX10_VIDEO_CMS, bus::epson_qx::video, q10cms_device)
+DECLARE_DEVICE_TYPE_NS(QX16_VIDEO_GMS, bus::epson_qx::video, q16gms_device)
+DECLARE_DEVICE_TYPE_NS(QX16_VIDEO_CMS, bus::epson_qx::video, q16cms_device)
 
 #endif // MAME_BUS_EPSON_QX_VIDEO_QX_GDC_CARDS_H

@@ -40,8 +40,11 @@
 #include "bus/centronics/ctronics.h"
 #include "bus/epson_qx/keyboard/keyboard.h"
 #include "bus/epson_qx/option.h"
+#include "bus/epson_qx/video/qx16_ibm_cards.h"
+#include "bus/epson_qx/video/qx_gdc_cards.h"
 #include "bus/epson_qx/video/video.h"
 #include "bus/rs232/rs232.h"
+#include "cpu/i86/i86.h"
 #include "cpu/z80/z80.h"
 #include "imagedev/floppy.h"
 #include "imagedev/snapquik.h"
@@ -107,9 +110,15 @@ public:
 
 	void qx10(machine_config &config);
 
-private:
+protected:
 	virtual void machine_start() override ATTR_COLD;
 	virtual void machine_reset() override ATTR_COLD;
+
+	virtual void add_video_slot(machine_config &config) ATTR_COLD;
+	virtual void add_option_slots(machine_config &config) ATTR_COLD;
+	virtual void add_floppies(machine_config &config) ATTR_COLD;
+
+	virtual int ram_bank_select(int drambank) const { return drambank; }
 
 	void update_memory_mapping();
 
@@ -232,7 +241,7 @@ void qx10_state::update_memory_mapping()
 
 	if (drambank >= 0)
 	{
-		m_rambank->set_entry(drambank);
+		m_rambank->set_entry(ram_bank_select(drambank));
 	}
 
 	if (m_external_bank)
@@ -348,6 +357,11 @@ static void qx10_floppies(device_slot_interface &device)
 	device.option_add("525dd", FLOPPY_525_DD);
 }
 
+static void qx16_floppies(device_slot_interface &device)
+{
+	device.option_add("525qd", EPSON_SD_543);
+}
+
 void qx10_state::qx10_upd765_interrupt(int state)
 {
 	m_fdcint = state;
@@ -365,6 +379,7 @@ void qx10_state::update_fdd_motor(uint8_t state)
 		if (floppy)
 		{
 			floppy->mon_w(state);
+//			floppy->set_ready(state);
 		}
 	}
 }
@@ -657,10 +672,30 @@ static INPUT_PORTS_START( qx10 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+static INPUT_PORTS_START( qx16 )
+	PORT_START("DSW")
+	PORT_DIPNAME( 0x01, 0x00, "Valdocs" )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPUNUSED( 0x02, IP_ACTIVE_HIGH )
+	PORT_DIPUNUSED( 0x04, IP_ACTIVE_HIGH )
+	PORT_DIPUNUSED( 0x08, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x70, 0x00, "MS-DOS Video Mode" )                // switches 5-7
+	PORT_DIPSETTING(    0x00, "QX-16 Native" )
+	PORT_DIPSETTING(    0x60, "IBM Monochrome" )
+	PORT_DIPSETTING(    0x40, "IBM Color 80x25 (mono monitor)" )
+	PORT_DIPSETTING(    0x20, "IBM Color 40x25 (mono monitor)" )
+	PORT_DIPSETTING(    0x50, "IBM Color 80x25 (color monitor)" )
+	PORT_DIPSETTING(    0x30, "IBM Color 40x25 (color monitor)" )
+	PORT_DIPNAME( 0x80, 0x00, "POST Self-Test" )
+	PORT_DIPSETTING(    0x00, "Full (factory default)" )
+	PORT_DIPSETTING(    0x80, "Minimal" )
+INPUT_PORTS_END
+
 
 void qx10_state::machine_start()
 {
-	m_rambank->configure_entries(0, 4, m_ram->pointer(), 0x10000);
+	m_rambank->configure_entries(0, m_ram->size() / 0x10000, m_ram->pointer(), 0x10000);
 	m_bus->set_memview(m_external_view[0]);
 
 	// FDD
@@ -702,6 +737,28 @@ void qx10_state::machine_reset()
 	update_memory_mapping();
 }
 
+void qx10_state::add_video_slot(machine_config &config)
+{
+	EPSON_QX_VIDEO_SLOT(config, m_video_slot, bus::epson_qx::video::qx10_video_cards, "q10gms");
+	m_video_slot->set_iospace(m_maincpu, AS_IO);
+	m_video_slot->drq_callback().set(m_dma_1, FUNC(am9517a_device::dreq1_w)).invert();
+}
+
+void qx10_state::add_option_slots(machine_config &config)
+{
+	EPSON_QX_OPTION_BUS_SLOT(config, "option1", m_bus, 0, bus::epson_qx::option_bus_devices, nullptr);
+	EPSON_QX_OPTION_BUS_SLOT(config, "option2", m_bus, 1, bus::epson_qx::option_bus_devices, nullptr);
+	EPSON_QX_OPTION_BUS_SLOT(config, "option3", m_bus, 2, bus::epson_qx::option_bus_devices, nullptr);
+	EPSON_QX_OPTION_BUS_SLOT(config, "option4", m_bus, 3, bus::epson_qx::option_bus_devices, nullptr);
+	EPSON_QX_OPTION_BUS_SLOT(config, "option5", m_bus, 4, bus::epson_qx::option_bus_devices, nullptr);
+}
+
+void qx10_state::add_floppies(machine_config &config)
+{
+	FLOPPY_CONNECTOR(config, m_floppy[0], qx10_floppies, "525dd", floppy_image_device::default_mfm_floppy_formats);
+	FLOPPY_CONNECTOR(config, m_floppy[1], qx10_floppies, "525dd", floppy_image_device::default_mfm_floppy_formats);
+}
+
 void qx10_state::qx10(machine_config &config)
 {
 	/* basic machine hardware */
@@ -716,9 +773,7 @@ void qx10_state::qx10(machine_config &config)
 	m_screen->set_raw(16.67_MHz_XTAL, 872, 152, 792, 421, 4, 404);
 	m_screen->set_screen_update(m_video_slot, FUNC(bus::epson_qx::video::video_slot_device::screen_update));
 
-	EPSON_QX_VIDEO_SLOT(config, m_video_slot, bus::epson_qx::video::video_cards, "q10gms");
-	m_video_slot->set_iospace(m_maincpu, AS_IO);
-	m_video_slot->drq_callback().set(m_dma_1, FUNC(am9517a_device::dreq1_w)).invert();
+	add_video_slot(config);
 
 	/* Devices */
 
@@ -796,8 +851,7 @@ void qx10_state::qx10(machine_config &config)
 	UPD765A(config, m_fdc, 8'000'000, true, true);
 	m_fdc->intrq_wr_callback().set(FUNC(qx10_state::qx10_upd765_interrupt));
 	m_fdc->drq_wr_callback().set(m_dma_1, FUNC(am9517a_device::dreq0_w)).invert();
-	FLOPPY_CONNECTOR(config, m_floppy[0], qx10_floppies, "525dd", floppy_image_device::default_mfm_floppy_formats);
-	FLOPPY_CONNECTOR(config, m_floppy[1], qx10_floppies, "525dd", floppy_image_device::default_mfm_floppy_formats);
+	add_floppies(config);
 
 	rs232_port_device &rs232(RS232_PORT(config, RS232_TAG, default_rs232_devices, nullptr));
 	rs232.rxd_handler().set(m_scc, FUNC(upd7201_device::rxb_w));
@@ -820,7 +874,7 @@ void qx10_state::qx10(machine_config &config)
 	SPEAKER_SOUND(config, m_speaker).add_route(ALL_OUTPUTS, "mono", 1.00);
 
 	/* internal ram */
-	RAM(config, RAM_TAG).set_default_size("256K");
+	RAM(config, m_ram).set_default_size("256K");
 	NVRAM(config, m_nvram, nvram_device::DEFAULT_NONE);
 
 	EPSON_QX_OPTION_BUS(config, m_bus, MAIN_CLK / 4);
@@ -850,17 +904,255 @@ void qx10_state::qx10(machine_config &config)
 	m_bus->out_intl_callback<3>().set(m_pic_s, FUNC(pic8259_device::ir6_w));
 	m_bus->out_intl_callback<4>().set(m_pic_s, FUNC(pic8259_device::ir7_w));
 	m_bus->set_iospace(m_maincpu, AS_IO);
-	EPSON_QX_OPTION_BUS_SLOT(config, "option1", m_bus, 0, bus::epson_qx::option_bus_devices, nullptr);
-	EPSON_QX_OPTION_BUS_SLOT(config, "option2", m_bus, 1, bus::epson_qx::option_bus_devices, nullptr);
-	EPSON_QX_OPTION_BUS_SLOT(config, "option3", m_bus, 2, bus::epson_qx::option_bus_devices, nullptr);
-	EPSON_QX_OPTION_BUS_SLOT(config, "option4", m_bus, 3, bus::epson_qx::option_bus_devices, nullptr);
-	EPSON_QX_OPTION_BUS_SLOT(config, "option5", m_bus, 4, bus::epson_qx::option_bus_devices, nullptr);
+	add_option_slots(config);
 
 	// software lists
 	SOFTWARE_LIST(config, "flop_list").set_original("qx10_flop");
 
 	QUICKLOAD(config, "quickload", "com,cpm", attotime::from_seconds(3)).set_load_callback(FUNC(qx10_state::quickload_cb));
 }
+
+
+/*
+    QX-16 — shares the QX-10 Z80 side, adds an 8088 for MS-DOS mode.
+*/
+
+class qx16_state : public qx10_state
+{
+public:
+	qx16_state(const machine_config &mconfig, device_type type, const char *tag)
+		: qx10_state(mconfig, type, tag),
+		m_subcpu(*this, "subcpu"),
+		m_ibm_video_slot(*this, "ibm_video")
+	{
+	}
+
+	void qx16(machine_config &config);
+
+protected:
+	virtual void machine_start() override ATTR_COLD;
+	virtual void machine_reset() override ATTR_COLD;
+
+	virtual void add_video_slot(machine_config &config) override ATTR_COLD;
+	virtual void add_option_slots(machine_config &config) override ATTR_COLD;
+	virtual void add_floppies(machine_config &config) override ATTR_COLD;
+
+	virtual int ram_bank_select(int drambank) const override { return m_memgroup * 4 + drambank; }
+
+	void cpu_switch_w(uint8_t data);
+	void bank_group_w(uint8_t data) { m_memgroup = data & 1; update_memory_mapping(); }
+	void qx16_18_w(uint8_t data);
+	uint8_t qx16_portb_r();
+	void qx16_portc_w(uint8_t data);
+	uint8_t option_io_r(offs_t offset);
+	void option_io_w(offs_t offset, uint8_t data);
+	uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
+	IRQ_CALLBACK_MEMBER(inta_call_subcpu);
+	uint8_t dma_memory_read_byte(offs_t offset);
+	void dma_memory_write_byte(offs_t offset, uint8_t data);
+	void qx16_z80_io(address_map &map) ATTR_COLD;
+	void qx16_8088_io(address_map &map) ATTR_COLD;
+	void qx16_8088_mem(address_map &map) ATTR_COLD;
+
+	required_device<cpu_device> m_subcpu;
+	required_device<bus::epson_qx::video::video_slot_device> m_ibm_video_slot;
+
+	uint8_t m_memgroup = 0;
+	uint8_t m_cpu_switch = 0;
+};
+
+void qx16_state::machine_start()
+{
+	qx10_state::machine_start();
+	save_item(NAME(m_memgroup));
+	save_item(NAME(m_cpu_switch));
+
+	m_subcpu->space(AS_PROGRAM).install_ram(0x00000, m_ram->size() - 1, m_ram->pointer());
+}
+
+void qx16_state::machine_reset()
+{
+	qx10_state::machine_reset();
+	m_subcpu->set_input_line(INPUT_LINE_HALT, ASSERT_LINE);
+	m_cpu_switch = 0;
+}
+
+void qx16_state::cpu_switch_w(uint8_t data)
+{
+	m_cpu_switch = data;
+	if(data)
+	{
+		m_maincpu->set_input_line(INPUT_LINE_HALT, ASSERT_LINE);
+		m_subcpu->set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
+	}
+	else
+	{
+		m_subcpu->set_input_line(INPUT_LINE_HALT, ASSERT_LINE);
+		m_maincpu->set_input_line(INPUT_LINE_HALT, CLEAR_LINE);
+	}
+}
+
+uint32_t qx16_state::screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect)
+{
+	if (m_video_slot->enabled())
+		return m_video_slot->screen_update(screen, bitmap, cliprect);
+	if (m_ibm_video_slot->enabled())
+		return m_ibm_video_slot->screen_update(screen, bitmap, cliprect);
+	bitmap.fill(rgb_t::black(), cliprect);
+	return 0;
+}
+
+void qx16_state::qx16_18_w(uint8_t data)
+{
+	m_membank = (data >> 4) & 0x0f;
+	m_spkr_enable = (data >> 2) & 0x01;
+	m_pit_1->write_gate2(BIT(data, 1));
+	m_pit_1->write_gate0(data & 1);
+	update_speaker();
+}
+
+uint8_t qx16_state::qx16_portb_r()
+{
+	uint8_t status = portb_r();
+
+	status |= (m_memgroup << 1);
+
+	return status;
+}
+
+void qx16_state::qx16_portc_w(uint8_t data)
+{
+	portc_w(data);
+
+	int const mode = BIT(data, 1);
+	for (auto &fc : m_floppy)
+		if (auto *sd = dynamic_cast<epson_sd_543 *>(fc->get_device()))
+			sd->tpi_mode_w(mode);
+}
+
+IRQ_CALLBACK_MEMBER(qx16_state::inta_call_subcpu)
+{
+	return m_pic_m->acknowledge();
+}
+
+uint8_t qx16_state::dma_memory_read_byte(offs_t offset)
+{
+	if (!m_cpu_switch)
+		return m_maincpu->space(AS_PROGRAM).read_byte(offset & 0xffff);
+	int drambank = 0;
+	if      (m_membank & 1) drambank = 0;
+	else if (m_membank & 2) drambank = 1;
+	else if (m_membank & 4) drambank = 2;
+	else if (m_membank & 8) drambank = 3;
+	return m_ram->pointer()[(m_memgroup * 0x40000) + (drambank * 0x10000) + (offset & 0xffff)];
+}
+
+void qx16_state::dma_memory_write_byte(offs_t offset, uint8_t data)
+{
+	if (!m_cpu_switch)
+	{
+		m_maincpu->space(AS_PROGRAM).write_byte(offset & 0xffff, data);
+		return;
+	}
+	int drambank = 0;
+	if      (m_membank & 1) drambank = 0;
+	else if (m_membank & 2) drambank = 1;
+	else if (m_membank & 4) drambank = 2;
+	else if (m_membank & 8) drambank = 3;
+	m_ram->pointer()[(m_memgroup * 0x40000) + (drambank * 0x10000) + (offset & 0xffff)] = data;
+}
+
+void qx16_state::qx16_z80_io(address_map &map)
+{
+	qx10_io(map);
+	map(0x24, 0x24).mirror(0xff00).w(FUNC(qx16_state::cpu_switch_w));
+	map(0x28, 0x28).mirror(0xff00).w(FUNC(qx16_state::bank_group_w));
+}
+
+void qx16_state::qx16_8088_io(address_map &map)
+{
+	map(0x00, 0x03).rw(m_pit_1, FUNC(pit8253_device::read), FUNC(pit8253_device::write));
+	map(0x04, 0x07).rw(m_pit_2, FUNC(pit8253_device::read), FUNC(pit8253_device::write));
+	map(0x08, 0x09).rw(m_pic_m, FUNC(pic8259_device::read), FUNC(pic8259_device::write));
+	map(0x0c, 0x0d).rw(m_pic_s, FUNC(pic8259_device::read), FUNC(pic8259_device::write));
+	map(0x10, 0x13).rw(m_scc, FUNC(upd7201_device::cd_ba_r), FUNC(upd7201_device::cd_ba_w));
+	map(0x14, 0x17).rw(m_ppi, FUNC(i8255_device::read), FUNC(i8255_device::write));
+	map(0x18, 0x18).portr("DSW").w(FUNC(qx16_state::qx16_18_w));
+	map(0x28, 0x28).w(FUNC(qx16_state::bank_group_w));
+	map(0x30, 0x33).rw(FUNC(qx16_state::qx10_30_r), FUNC(qx16_state::fdd_motor_w));
+	map(0x34, 0x35).m(m_fdc, FUNC(upd765a_device::map));
+	map(0x3c, 0x3c).rw(m_rtc, FUNC(mc146818_device::data_r), FUNC(mc146818_device::data_w));
+	map(0x3d, 0x3d).w(m_rtc, FUNC(mc146818_device::address_w));
+	map(0x40, 0x4f).rw(m_dma_1, FUNC(am9517a_device::read), FUNC(am9517a_device::write));
+	map(0x50, 0x5f).rw(m_dma_2, FUNC(am9517a_device::read), FUNC(am9517a_device::write));
+	map(0x80, 0xff).rw(FUNC(qx16_state::option_io_r), FUNC(qx16_state::option_io_w));
+}
+
+uint8_t qx16_state::option_io_r(offs_t offset)
+{
+	return m_bus->iospace().read_byte(0x80 + offset);
+}
+
+void qx16_state::option_io_w(offs_t offset, uint8_t data)
+{
+	m_bus->iospace().write_byte(0x80 + offset, data);
+}
+
+void qx16_state::qx16_8088_mem(address_map &map)
+{
+	map.unmap_value_high();
+	map(0xc0000, 0xc3fff).mirror(0x3c000).rom().region("subcpu", 0);
+}
+
+void qx16_state::add_video_slot(machine_config &config)
+{
+	EPSON_QX_VIDEO_SLOT(config, m_video_slot, bus::epson_qx::video::qx16_video_cards, "q16gms");
+	m_video_slot->set_iospace(m_maincpu, AS_IO);
+	m_video_slot->set_extra_iospace(m_subcpu, AS_IO);
+	m_video_slot->drq_callback().set(m_dma_1, FUNC(am9517a_device::dreq1_w)).invert();
+
+	EPSON_QX_VIDEO_SLOT(config, m_ibm_video_slot, bus::epson_qx::video::qx16_ibm_video_cards, "pcvideo");
+	m_ibm_video_slot->set_iospace(m_subcpu, AS_IO);
+	m_ibm_video_slot->set_memspace(m_subcpu, AS_PROGRAM);
+}
+
+void qx16_state::add_option_slots(machine_config &config)
+{
+	EPSON_QX_OPTION_BUS_SLOT(config, "option1", m_bus, 0, bus::epson_qx::option_bus_devices, nullptr);
+	EPSON_QX_OPTION_BUS_SLOT(config, "option2", m_bus, 1, bus::epson_qx::option_bus_devices, nullptr);
+	EPSON_QX_OPTION_BUS_SLOT(config, "option3", m_bus, 2, bus::epson_qx::option_bus_devices, nullptr);
+}
+
+void qx16_state::add_floppies(machine_config &config)
+{
+	FLOPPY_CONNECTOR(config, m_floppy[0], qx16_floppies, "525qd", floppy_image_device::default_mfm_floppy_formats);
+	FLOPPY_CONNECTOR(config, m_floppy[1], qx16_floppies, "525qd", floppy_image_device::default_mfm_floppy_formats);
+}
+
+void qx16_state::qx16(machine_config &config)
+{
+	qx10(config);
+
+	I8088(config, m_subcpu, MAIN_CLK / 3);
+	m_subcpu->set_addrmap(AS_PROGRAM, &qx16_state::qx16_8088_mem);
+	m_subcpu->set_addrmap(AS_IO, &qx16_state::qx16_8088_io);
+	m_maincpu->set_addrmap(AS_IO, &qx16_state::qx16_z80_io);
+
+	m_pic_m->out_int_callback().append_inputline(m_subcpu, 0);
+	m_subcpu->set_irq_acknowledge_callback(FUNC(qx16_state::inta_call_subcpu));
+
+	m_dma_1->in_memr_callback().set(FUNC(qx16_state::dma_memory_read_byte));
+	m_dma_1->out_memw_callback().set(FUNC(qx16_state::dma_memory_write_byte));
+	m_dma_2->in_memr_callback().set(FUNC(qx16_state::dma_memory_read_byte));
+	m_dma_2->out_memw_callback().set(FUNC(qx16_state::dma_memory_write_byte));
+
+	m_ppi->in_pb_callback().set(FUNC(qx16_state::qx16_portb_r));
+	m_ppi->out_pc_callback().set(FUNC(qx16_state::qx16_portc_w));
+
+	m_ram->set_default_size("512k");
+	m_screen->set_screen_update(FUNC(qx16_state::screen_update));
+}
+
 
 /* ROM definition */
 ROM_START( qx10 )
@@ -877,6 +1169,24 @@ ROM_START( qx10 )
 	ROM_RELOAD(0x1800, 0x800)
 ROM_END
 
+ROM_START( qx16 )
+	// Each BIOS index pairs a Z80 IPL with its matching 8088 BIOS.
+	ROM_SYSTEM_BIOS(0, "v20a", "Z80 IPL v2.0a / 8088 BIOS v2.25")
+	ROM_SYSTEM_BIOS(1, "v31h", "Z80 IPL v3.1h / 8088 BIOS v2.26h")
+	ROM_SYSTEM_BIOS(2, "cfboot", "Z80 IPL v3.0A-CF / GlaBIOS v0.4.3")
+
+	ROM_REGION( 0x2000, "maincpu", ROMREGION_ERASEFF )
+	ROMX_LOAD( "ipl2.0a.bin", 0x0000, 0x2000, CRC(9bc5c643) SHA1(8970c3eb9bda3dd6bfc2a6f0172757a8d9ed32c9), ROM_BIOS(0))
+	ROMX_LOAD( "ipl3.1h.bin", 0x0000, 0x2000, CRC(917da126) SHA1(a1439c0cd1b1c5a30ae08ed3d439acbfc1b0759b), ROM_BIOS(1))
+	ROMX_LOAD( "ipl3.0a-cf.bin", 0x0000, 0x2000, CRC(c4ef78b3) SHA1(14b97469730b4c93caff29ff0c924569474d5150), ROM_BIOS(2))
+
+	// 8088 BIOS: mapped to 0xc0000-0xfffff (mirrored across the full 256K window)
+	ROM_REGION( 0x4000, "subcpu", ROMREGION_ERASEFF )
+	ROMX_LOAD( "bios225.bin", 0x0000, 0x4000, CRC(bbc732fe) SHA1(833be3e636a9718a234af0d5c0a44f854593c543), ROM_BIOS(0))
+	ROMX_LOAD( "bios226h.bin",  0x0000, 0x4000, CRC(3d5deb8e) SHA1(2999423882bd4b6e33fa2f40e1c2677bc103a79b), ROM_BIOS(1))
+	ROMX_LOAD( "glabios-0.4.3.bin",  0x0000, 0x4000, CRC(7e082a0f) SHA1(cc28ceb9e4f62e2db7ca77df9ce5ff1d94d86b93), ROM_BIOS(2))
+ROM_END
+
 } // anonymous namespace
 
 
@@ -884,3 +1194,4 @@ ROM_END
 
 /*    YEAR  NAME  PARENT  COMPAT  MACHINE  INPUT  CLASS       INIT        COMPANY  FULLNAME  FLAGS */
 COMP( 1983, qx10, 0,      0,      qx10,    qx10,  qx10_state, empty_init, "Epson", "QX-10",  MACHINE_NOT_WORKING )
+COMP( 1985, qx16, 0,      0,      qx16,    qx16,  qx16_state, empty_init, "Epson", "QX-16",  0 )

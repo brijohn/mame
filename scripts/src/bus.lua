@@ -2260,6 +2260,8 @@ if BUSES["EPSON_QX_VIDEO"] then
 		MAME_DIR .. "src/devices/bus/epson_qx/video/video.h",
 		MAME_DIR .. "src/devices/bus/epson_qx/video/qx_gdc_cards.cpp",
 		MAME_DIR .. "src/devices/bus/epson_qx/video/qx_gdc_cards.h",
+		MAME_DIR .. "src/devices/bus/epson_qx/video/qx16_ibm_cards.cpp",
+		MAME_DIR .. "src/devices/bus/epson_qx/video/qx16_ibm_cards.h",
 	}
 end
 

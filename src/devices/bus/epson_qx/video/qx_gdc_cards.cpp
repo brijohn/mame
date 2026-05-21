@@ -21,6 +21,8 @@
 
 DEFINE_DEVICE_TYPE(QX10_VIDEO_GMS, bus::epson_qx::video::q10gms_device, "qx10_video_gms", "Epson Q10GMS Monochrome Graphics Card")
 DEFINE_DEVICE_TYPE(QX10_VIDEO_CMS, bus::epson_qx::video::q10cms_device, "qx10_video_cms", "Epson Q10CMS Color Graphics Card")
+DEFINE_DEVICE_TYPE(QX16_VIDEO_GMS, bus::epson_qx::video::q16gms_device, "qx16_video_gms", "Epson APX-IGGS Monochrome Graphics Card")
+DEFINE_DEVICE_TYPE(QX16_VIDEO_CMS, bus::epson_qx::video::q16cms_device, "qx16_video_cms", "Epson APX-ICMS Color Graphics Card")
 
 
 namespace bus::epson_qx::video {
@@ -91,12 +93,14 @@ void qx_gdc_card_device::device_add_mconfig(machine_config &config)
 
 void qx_gdc_card_device::device_start()
 {
-	address_space &space = m_slot->iospace();
+	save_item(NAME(m_zoom));
+}
+
+void qx_gdc_card_device::install_io(address_space &space)
+{
 	space.install_device(0x2c, 0x2c, *this, &qx_gdc_card_device::id_map);
 	space.install_device(0x38, 0x39, *this, &qx_gdc_card_device::gdc_map);
-	space.install_device(0x3a, 0x3a, *this, &qx_gdc_card_device::zoom_map);
-
-	save_item(NAME(m_zoom));
+	space.install_device(0x3a, 0x3b, *this, &qx_gdc_card_device::ctrl_map);
 }
 
 void qx_gdc_card_device::device_reset()
@@ -121,9 +125,10 @@ void qx_gdc_card_device::gdc_map(address_map &map)
 	map(0x00, 0x01).mirror(0xff00).rw(m_hgdc, FUNC(upd7220_device::read), FUNC(upd7220_device::write));
 }
 
-void qx_gdc_card_device::zoom_map(address_map &map)
+void qx_gdc_card_device::ctrl_map(address_map &map)
 {
 	map(0x00, 0x00).mirror(0xff00).w(FUNC(qx_gdc_card_device::zoom_w));
+	map(0x01, 0x01).mirror(0xff00).r(FUNC(qx_gdc_card_device::lightpen_r));
 }
 
 UPD7220_DRAW_TEXT_LINE_MEMBER(qx_gdc_card_device::hgdc_draw_text)
@@ -238,9 +243,14 @@ void qx_gdc_color_card_device::device_start()
 	qx_gdc_card_device::device_start();
 
 	m_vram_bank->configure_entries(0, 3, &m_vram[0], 0x20000);
-	m_slot->iospace().install_device(0x2d, 0x2d, *this, &qx_gdc_color_card_device::bank_map);
 
 	save_item(NAME(m_vram_bank_val));
+}
+
+void qx_gdc_color_card_device::install_io(address_space &space)
+{
+	qx_gdc_card_device::install_io(space);
+	space.install_device(0x2d, 0x2d, *this, &qx_gdc_color_card_device::bank_map);
 }
 
 void qx_gdc_color_card_device::device_reset()
@@ -316,6 +326,69 @@ q10gms_device::q10gms_device(const machine_config &mconfig, const char *tag, dev
 q10cms_device::q10cms_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
 	: qx_gdc_color_card_device(mconfig, QX10_VIDEO_CMS, tag, owner, clock)
 {
+}
+
+q16gms_device::q16gms_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: qx_gdc_mono_card_device(mconfig, QX16_VIDEO_GMS, tag, owner, clock)
+{
+}
+
+void q16gms_device::device_start()
+{
+	qx_gdc_mono_card_device::device_start();
+	save_item(NAME(m_stop));
+}
+
+void q16gms_device::device_reset()
+{
+	qx_gdc_mono_card_device::device_reset();
+	m_stop = false;
+}
+
+void q16gms_device::zoom_w(uint8_t data)
+{
+	qx_gdc_card_device::zoom_w(data);
+	m_stop = BIT(data, 7);
+}
+
+q16cms_device::q16cms_device(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock)
+	: qx_gdc_color_card_device(mconfig, QX16_VIDEO_CMS, tag, owner, clock)
+{
+}
+
+void q16cms_device::device_start()
+{
+	qx_gdc_color_card_device::device_start();
+	save_item(NAME(m_stop));
+}
+
+void q16cms_device::device_reset()
+{
+	qx_gdc_color_card_device::device_reset();
+	m_stop = false;
+}
+
+void q16cms_device::zoom_w(uint8_t data)
+{
+	qx_gdc_card_device::zoom_w(data);
+	m_stop = BIT(data, 7);
+}
+
+
+//**************************************************************************
+//  CARD OPTION LISTS
+//**************************************************************************
+
+void qx10_video_cards(device_slot_interface &device)
+{
+	device.option_add("q10gms", QX10_VIDEO_GMS);
+	device.option_add("q10cms", QX10_VIDEO_CMS);
+}
+
+void qx16_video_cards(device_slot_interface &device)
+{
+	device.option_add("q16gms", QX16_VIDEO_GMS);
+	device.option_add("q16cms", QX16_VIDEO_CMS);
 }
 
 }

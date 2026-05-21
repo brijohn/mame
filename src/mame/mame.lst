@@ -18813,6 +18813,7 @@ px8
 
 @source:epson/qx10.cpp
 qx10
+qx16
 
 @source:ericsson/alfaskop41xx.cpp
 alfaskop4110

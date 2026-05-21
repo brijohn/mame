@@ -9,8 +9,6 @@
 #include "emu.h"
 #include "video.h"
 
-#include "qx_gdc_cards.h"
-
 
 //**************************************************************************
 //  DEVICE DEFINITIONS
@@ -33,6 +31,8 @@ video_slot_device::video_slot_device(const machine_config &mconfig, const char *
 	: device_t(mconfig, EPSON_QX_VIDEO_SLOT, tag, owner, clock)
 	, device_single_card_slot_interface<device_qx_video_interface>(mconfig, *this)
 	, m_iospace(*this, finder_base::DUMMY_TAG, -1)
+	, m_memspace(*this, finder_base::DUMMY_TAG, -1)
+	, m_extra_iospace(*this, finder_base::DUMMY_TAG, -1)
 	, m_drq_cb(*this)
 	, m_card(nullptr)
 {
@@ -44,6 +44,13 @@ video_slot_device::video_slot_device(const machine_config &mconfig, const char *
 
 void video_slot_device::device_start()
 {
+	m_card = get_card_device();
+	if (m_card)
+	{
+		m_card->install_io(*m_iospace);
+		if (m_extra_iospace.found())
+			m_card->install_io(*m_extra_iospace);
+	}
 }
 
 //-------------------------------------------------
@@ -52,7 +59,6 @@ void video_slot_device::device_start()
 
 void video_slot_device::device_reset()
 {
-	m_card = get_card_device();
 }
 
 uint8_t video_slot_device::dack_r()
@@ -76,6 +82,11 @@ uint32_t video_slot_device::screen_update(screen_device &screen, bitmap_rgb32 &b
 	return 0;
 }
 
+bool video_slot_device::enabled() const
+{
+	return m_card && m_card->enabled();
+}
+
 
 //**************************************************************************
 //  VIDEO CARD INTERFACE
@@ -89,13 +100,6 @@ device_qx_video_interface::device_qx_video_interface(const machine_config &mconf
 	: device_interface(device, "epson_qx_video")
 {
 	m_slot = dynamic_cast<video_slot_device *>(device.owner());
-}
-
-
-void video_cards(device_slot_interface &device)
-{
-	device.option_add("q10gms", QX10_VIDEO_GMS);
-	device.option_add("q10cms", QX10_VIDEO_CMS);
 }
 
 }

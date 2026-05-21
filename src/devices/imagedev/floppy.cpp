@@ -108,6 +108,7 @@ DEFINE_DEVICE_TYPE(EPSON_SD_311,  epson_sd_311,  "epson_sd_311",  "EPSON SD-311 
 #endif
 DEFINE_DEVICE_TYPE(EPSON_SD_320,  epson_sd_320,  "epson_sd_320",  "EPSON SD-320 Mini-Floppy Disk Drive")
 DEFINE_DEVICE_TYPE(EPSON_SD_321,  epson_sd_321,  "epson_sd_321",  "EPSON SD-321 Mini-Floppy Disk Drive")
+DEFINE_DEVICE_TYPE(EPSON_SD_543,  epson_sd_543,  "epson_sd_543",  "EPSON SD-543 quad density floppy drive")
 #if 0
 DEFINE_DEVICE_TYPE(EPSON_SD_521L, epson_sd_531l, "epson_sd_531l", "EPSON SD-531L Mini-Floppy Disk Drive")
 DEFINE_DEVICE_TYPE(EPSON_SD_525,  epson_sd_525,  "epson_sd_525",  "EPSON SD-525 Mini-Floppy Disk Drive")
@@ -995,10 +996,11 @@ void floppy_image_device::stp_w(int state)
 		m_stp = state;
 		if ( m_stp == 0 ) {
 			// Allow to reach track -1 or track==max for the sound routine
+			int const step = track_step_amount();
 			if ( m_dir ) {
-				m_cyl--;
+				m_cyl -= step;
 			} else {
-				m_cyl++;
+				m_cyl += step;
 			}
 			LOGMASKED(LOG_STEP, "track %d [%f]\n", m_cyl, machine().time().as_double());
 			if (m_make_sound) m_sound_out->step(m_cyl);
@@ -2210,6 +2212,56 @@ void epson_sd_321::setup_characteristics()
 	add_variant(floppy_image::SSSD);
 	add_variant(floppy_image::SSDD);
 	add_variant(floppy_image::DSDD);
+}
+
+
+//-------------------------------------------------
+//  EPSON SD-543 5.25" quad density floppy drive
+//
+//  96 TPI drive that can be switched to 48 TPI compatibility mode (steps
+//  two cylinders per pulse) via tpi_mode_w. Reset default is 96 TPI.
+//-------------------------------------------------
+
+epson_sd_543::epson_sd_543(const machine_config &mconfig, const char *tag, device_t *owner, uint32_t clock) :
+	floppy_image_device(mconfig, EPSON_SD_543, tag, owner, clock),
+	m_mode(1)
+{
+}
+
+epson_sd_543::~epson_sd_543()
+{
+}
+
+void epson_sd_543::device_start()
+{
+	floppy_image_device::device_start();
+	save_item(NAME(m_mode));
+}
+
+void epson_sd_543::device_reset()
+{
+	floppy_image_device::device_reset();
+	m_mode = 1;
+}
+
+void epson_sd_543::tpi_mode_w(int state)
+{
+	m_mode = state ? 1 : 0;
+}
+
+void epson_sd_543::setup_characteristics()
+{
+	m_form_factor = floppy_image::FF_525;
+	m_tracks = 80;
+	m_sides = 2;
+	set_rpm(300);
+
+	add_variant(floppy_image::SSSD);
+	add_variant(floppy_image::SSDD);
+	add_variant(floppy_image::SSQD);
+	add_variant(floppy_image::DSSD);
+	add_variant(floppy_image::DSDD);
+	add_variant(floppy_image::DSQD);
 }
 
 

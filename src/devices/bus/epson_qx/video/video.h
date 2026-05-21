@@ -42,6 +42,8 @@ public:
 
 	// configuration
 	template <typename T> void set_iospace(T &&tag, int spacenum) { m_iospace.set_tag(std::forward<T>(tag), spacenum); }
+	template <typename T> void set_memspace(T &&tag, int spacenum) { m_memspace.set_tag(std::forward<T>(tag), spacenum); }
+	template <typename T> void set_extra_iospace(T &&tag, int spacenum) { m_extra_iospace.set_tag(std::forward<T>(tag), spacenum); }
 
 	// callbacks
 	auto drq_callback() { return m_drq_cb.bind(); }
@@ -49,11 +51,14 @@ public:
 	// called from card
 	void drq_w(int state) { m_drq_cb(state); }
 	address_space &iospace() const { return *m_iospace; }
+	address_space &memspace() const { return *m_memspace; }
+	bool has_memspace() const { return m_memspace.found(); }
 
 	// called from host
 	uint8_t dack_r();
 	void dack_w(uint8_t data);
 	uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect);
+	bool enabled() const;
 
 protected:
 	// device_t implementation
@@ -62,6 +67,8 @@ protected:
 
 private:
 	required_address_space m_iospace;
+	optional_address_space m_memspace;
+	optional_address_space m_extra_iospace;
 	devcb_write_line m_drq_cb;
 
 	device_qx_video_interface *m_card;
@@ -71,18 +78,18 @@ private:
 class device_qx_video_interface : public device_interface
 {
 public:
+	virtual void install_io(address_space &space) ATTR_COLD {}
+
 	virtual uint32_t screen_update(screen_device &screen, bitmap_rgb32 &bitmap, const rectangle &cliprect) = 0;
 	virtual uint8_t dack_r() { return 0xff; }
 	virtual void dack_w(uint8_t data) { }
+	virtual bool enabled() const { return true; }
 
 protected:
 	device_qx_video_interface(const machine_config &mconfig, device_t &device);
 
 	video_slot_device *m_slot;
 };
-
-
-void video_cards(device_slot_interface &device);
 
 } // namespace bus::epson_qx::video
 
