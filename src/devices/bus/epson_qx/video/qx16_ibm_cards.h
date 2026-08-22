@@ -74,6 +74,8 @@ private:
 	void update_pipeline();
 
 	uint16_t vram_addr(uint16_t ma, uint8_t ra) const;
+	uint16_t glyph_row(uint8_t ra) const;
+	bool video_dot();
 
 	void hsync_changed(int state);
 	void vsync_changed(int state);
@@ -95,7 +97,6 @@ private:
 	uint8_t  m_hsync;
 	uint8_t  m_de;
 	uint8_t  m_lpen_latch;
-	uint8_t  m_video_dot;
 	int      m_framecnt;
 	pipeline m_pipe;
 };

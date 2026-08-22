@@ -90,7 +90,6 @@ qx16_pcvideo_device::qx16_pcvideo_device(const machine_config &mconfig, const ch
 	, m_hsync(0)
 	, m_de(0)
 	, m_lpen_latch(0)
-	, m_video_dot(0)
 	, m_framecnt(0)
 	, m_pipe{}
 {
@@ -126,7 +125,6 @@ void qx16_pcvideo_device::device_start()
 	save_item(NAME(m_hsync));
 	save_item(NAME(m_de));
 	save_item(NAME(m_lpen_latch));
-	save_item(NAME(m_video_dot));
 	save_item(NAME(m_framecnt));
 }
 
@@ -140,7 +138,6 @@ void qx16_pcvideo_device::device_reset()
 	m_hsync = 0;
 	m_de = 0;
 	m_lpen_latch = 0;
-	m_video_dot = 0;
 	m_framecnt = 0;
 	update_pipeline();
 	update_vram_mapping();
@@ -207,13 +204,10 @@ void qx16_pcvideo_device::cntr_mapr_map(address_map &map)
 	map(0x01, 0x01).w(FUNC(qx16_pcvideo_device::mapr_w));
 }
 
-// 3BAh: bit 0 = hsync, bit 3 = video dot (faked: toggles per read while
-// display is active, so it reads as busy only inside the active area)
+// 3BAh: bit 0 = hsync, bit 3 = video dot
 uint8_t qx16_pcvideo_device::mda_status_r()
 {
-	if (!machine().side_effects_disabled())
-		m_video_dot ^= 1;
-	return (m_de && m_video_dot ? 0x08 : 0x00) | m_hsync;
+	return (video_dot() ? 0x08 : 0x00) | m_hsync;
 }
 
 // 3DAh: bit 0 = display disabled, bit 1 = light pen latch, bit 3 = vsync
@@ -346,6 +340,41 @@ uint16_t qx16_pcvideo_device::vram_addr(uint16_t ma, uint8_t ra) const
 	}
 }
 
+uint16_t qx16_pcvideo_device::glyph_row(uint8_t ra) const
+{
+	if (m_pipe.font_rows == 16)
+		return (ra & 0x08) ? 0x800 | (ra & 0x07) : ra;
+	return ra & 0x07;
+}
+
+// Pixel currently being output, for the MDA status register
+bool qx16_pcvideo_device::video_dot()
+{
+	if (!m_de || !m_pipe.enable)
+		return false;
+
+	uint16_t const ma = m_crtc->get_ma();
+	uint8_t const ra = m_crtc->get_ra();
+	uint16_t const addr = vram_addr(ma, ra);
+	uint16_t const word = (m_vram[addr] << 8) | m_vram[addr + 1];
+
+	switch (m_pipe.kind)
+	{
+	case unpack::TEXT:
+	{
+		uint8_t const chr = word >> 8;
+		uint8_t const attr = word & 0xff;
+		bool const dot = BIT(m_chargen[m_pipe.font_base + glyph_row(ra) + chr * 8], 7 - (m_screen->hpos() & 7));
+		return dot != (m_pipe.mono && (attr & 0x77) == 0x70);
+	}
+	case unpack::GFX_2BPP:
+		return ((word >> (14 - 2 * (m_screen->hpos() & 7))) & 0x03) != 0;
+	case unpack::GFX_1BPP:
+		return BIT(word, 15 - (m_screen->hpos() & 15));
+	}
+	return false;
+}
+
 MC6845_UPDATE_ROW(qx16_pcvideo_device::crtc_update_row)
 {
 	rgb_t const *const palette = m_palette->palette()->entry_list_raw();
@@ -363,7 +392,7 @@ MC6845_UPDATE_ROW(qx16_pcvideo_device::crtc_update_row)
 	{
 	case unpack::TEXT:
 	{
-		uint16_t const row = (pipe.font_rows == 16) ? ((ra & 0x08) ? 0x800 | (ra & 0x07) : ra) : (ra & 0x07);
+		uint16_t const row = glyph_row(ra);
 		bool const last_row = (ra == pipe.font_rows - 1);
 
 		for (int i = 0; i < x_count; i++)
