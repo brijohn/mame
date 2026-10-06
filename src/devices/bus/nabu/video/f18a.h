@@ -1,4 +1,4 @@
-// license:BSD-3-Clause
+﻿// license:BSD-3-Clause
 // copyright-holders:GTAMP, Troy Schrapel
 /***************************************************************************
 
@@ -46,6 +46,8 @@ protected:
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
 	virtual void device_stop() override ATTR_COLD;
+	virtual void device_pre_save() override ATTR_COLD;
+	virtual void device_post_load() override ATTR_COLD;
 
 	// device_nvram_interface overrides (the PICO9918 settings block)
 	virtual void nvram_default() override;
@@ -83,6 +85,12 @@ private:
 	pico9918_scanline_params_t m_params;
 	pico9918_frame_display_t m_display;
 	pico9918_frame_geometry_t m_geometry;
+
+	// the library's instance, as a flat copy that save states can hold (see device_pre_save)
+	size_t m_state_size;
+	std::unique_ptr<uint8_t []> m_state;
+	int m_splash_offset;
+	uint8_t m_splash_hide;
 
 	uint8_t m_config[CONFIG_BYTES];
 	uint8_t *m_device_config;

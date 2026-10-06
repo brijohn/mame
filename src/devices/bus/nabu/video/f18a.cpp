@@ -39,6 +39,12 @@
 #include "pico9918_config.h"
 #include "gpu/gpu.h"
 #include "overlay/diag.h"
+#include "overlay/splash.h"
+
+#include <cstring>
+
+// the line pointer the core caches between scanlines (pico9918.c); it points into host memory
+extern "C" const uint8_t *pico9918_cached_line_source;
 
 // The version of the vendored pico9918-core (3rdparty/pico9918-core, project() version).
 #define PICO9918_CORE_VER_MAJOR 1
@@ -77,6 +83,9 @@ pico9918_card_base::pico9918_card_base(const machine_config &mconfig, device_typ
 	m_line_timer(nullptr),
 	m_vdp(nullptr),
 	m_chip(chip),
+	m_state_size(0),
+	m_splash_offset(0),
+	m_splash_hide(0),
 	m_device_config(nullptr),
 	m_line(0),
 	m_lines_per_call(1),
@@ -137,8 +146,25 @@ void pico9918_card_base::device_start()
 
 	m_line_timer = timer_alloc(FUNC(pico9918_card_base::line_tick), this);
 
+	// Save states. The instance is one flat block, but it holds host pointers (the callbacks and
+	// the line buffer) that mean nothing in another process, so it is copied into m_state when
+	// saving and copied back, with those pointers set up again, after loading.
+	m_state_size = pico9918_instance_size();
+	m_state = std::make_unique<uint8_t []>(m_state_size);
+	std::fill_n(m_state.get(), m_state_size, 0);
+
+	save_pointer(NAME(m_state), m_state_size);
+	save_item(NAME(m_splash_offset));
+	save_item(NAME(m_splash_hide));
 	save_item(NAME(m_line));
 	save_item(NAME(m_int_state));
+	save_item(NAME(m_lines_per_call));
+	save_item(NAME(m_field_lines));
+	save_item(NAME(m_config));
+	save_pointer(reinterpret_cast<uint8_t *>(&m_params), "m_params", sizeof(m_params));
+	save_pointer(reinterpret_cast<uint8_t *>(&m_display), "m_display", sizeof(m_display));
+	save_pointer(reinterpret_cast<uint8_t *>(&m_geometry), "m_geometry", sizeof(m_geometry));
+	save_pointer(&m_bitmap.pix(0), "m_bitmap", size_t(m_bitmap.rowpixels()) * m_bitmap.height());
 }
 
 //-------------------------------------------------
@@ -180,6 +206,33 @@ void pico9918_card_base::device_reset()
 
 	const attotime period = attotime::from_hz(FRAME_RATE * SCANLINES);
 	m_line_timer->adjust(period, 0, period);
+}
+
+void pico9918_card_base::device_pre_save()
+{
+	if (m_vdp)
+		std::memcpy(m_state.get(), m_vdp, m_state_size);
+
+	// the splash animation is kept in the library's file statics, not in the instance
+	bool hide = false;
+	pico9918_splash_get_state(&m_splash_offset, &hide);
+	m_splash_hide = hide ? 1 : 0;
+}
+
+void pico9918_card_base::device_post_load()
+{
+	pico9918_t *const tms9918 = m_vdp;
+
+	std::memcpy(tms9918, m_state.get(), m_state_size);
+
+	// the pointers that came back belong to the process that saved the state
+	pico9918_gpu_set_config_save_callback(tms9918, &pico9918_card_base::config_saved_cb, this);
+	pico9918_frame_set_config_reload_callback(tms9918, &pico9918_card_base::config_reload_cb, this);
+	pico9918_cached_line_source = nullptr;
+	m_device_config = pico9918_config(tms9918);
+	pico9918_splash_set_state(m_splash_offset, m_splash_hide != 0);
+
+	// the screen holds the last frame as it was saved; the next frame redraws it
 }
 
 void pico9918_card_base::device_stop()
