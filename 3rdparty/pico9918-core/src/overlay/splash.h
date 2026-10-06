@@ -69,6 +69,16 @@ extern "C"
   void pico9918_splash_allow_hide(void);
 
   /**
+   * LOCAL ADDITION (not in upstream pico9918-core): read and restore the splash animation
+   * state, which lives in file statics rather than the instance, so a host's save states can
+   * carry it. With the splash compiled out these report 0 / false and set nothing.
+   */
+  PICO9918_DLLEXPORT
+  void pico9918_splash_get_state(int* logoOffset, bool* canHide);
+  PICO9918_DLLEXPORT
+  void pico9918_splash_set_state(int logoOffset, bool canHide);
+
+  /**
  * render the splash logo into the scanline buffer, if row `y` falls in the
  * logo band. Also advances the animation, on y == 0.
  */

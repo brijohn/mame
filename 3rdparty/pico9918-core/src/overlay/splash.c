@@ -68,6 +68,29 @@ void pico9918_splash_allow_hide(void)
 #endif
 }
 
+/* LOCAL ADDITION (not in upstream): see splash.h */
+void pico9918_splash_get_state(int* logoOffsetOut, bool* canHideOut)
+{
+#if !PICO9918_NO_SPLASH
+  *logoOffsetOut = logoOffset;
+  *canHideOut    = canHideSplash;
+#else
+  *logoOffsetOut = 0;
+  *canHideOut    = false;
+#endif
+}
+
+void pico9918_splash_set_state(int logoOffsetIn, bool canHideIn)
+{
+#if !PICO9918_NO_SPLASH
+  logoOffset    = logoOffsetIn;
+  canHideSplash = canHideIn;
+#else
+  (void)logoOffsetIn;
+  (void)canHideIn;
+#endif
+}
+
 /*
  * output the PICO9918 splash logo / firmware version at the bottom of the screen
  */
