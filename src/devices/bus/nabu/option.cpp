@@ -97,49 +97,37 @@ void option_bus_device::device_start()
 //-------------------------------------------------
 void option_bus_device::device_reset()
 {
-	m_socket_cards.clear();
+}
+
+device_option_expansion_interface *option_bus_device::socket_card(option_slot_device *slot)
+{
+	device_option_expansion_interface *const intf(slot->card());
+	return (intf && intf->cpu_socket()) ? intf : nullptr;
+}
+
+void option_bus_device::install_socket(memory_view::memory_view_entry &view)
+{
 	for (option_slot_device *slot : m_slot_list) {
-		device_option_expansion_interface *const intf(slot->card());
-		if (intf && intf->cpu_socket()) {
-			m_socket_cards.push_back(intf);
+		if (device_option_expansion_interface *card = socket_card(slot)) {
+			card->install_memory(view);
 		}
 	}
 }
 
-bool option_bus_device::mem_read(offs_t offset, uint8_t &data)
+void option_bus_device::install_socket_io(address_space &space)
 {
-	for (device_option_expansion_interface *card : m_socket_cards) {
-		if (card->mem_read(offset, data)) {
-			return true;
+	for (option_slot_device *slot : m_slot_list) {
+		if (device_option_expansion_interface *card = socket_card(slot)) {
+			card->install_io(space);
 		}
 	}
-	return false;
 }
 
-bool option_bus_device::mem_write(offs_t offset, uint8_t data)
+bool option_bus_device::socket_owns_memory() const
 {
-	for (device_option_expansion_interface *card : m_socket_cards) {
-		if (card->mem_write(offset, data)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-bool option_bus_device::socket_io_read(offs_t port, uint8_t &data)
-{
-	for (device_option_expansion_interface *card : m_socket_cards) {
-		if (card->io_read(port, data)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-bool option_bus_device::socket_io_write(offs_t port, uint8_t data)
-{
-	for (device_option_expansion_interface *card : m_socket_cards) {
-		if (card->io_write(port, data)) {
+	for (option_slot_device *slot : m_slot_list) {
+		device_option_expansion_interface *const card = socket_card(slot);
+		if (card && card->owns_memory()) {
 			return true;
 		}
 	}

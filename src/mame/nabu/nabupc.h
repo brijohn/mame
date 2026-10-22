@@ -35,9 +35,6 @@ private:
 	image_init_result quickload_cb(device_image_interface &image);
 
 	uint8_t read_mem(offs_t offset);
-	void write_mem(offs_t offset, uint8_t data);
-	uint8_t socket_io_r(offs_t offset);
-	void socket_io_w(offs_t offset, uint8_t data);
 
 	uint8_t psg_portb_r();
 	void psg_porta_w(uint8_t data);
@@ -68,6 +65,7 @@ private:
 	required_device<ram_device> m_ram;
 	required_device<centronics_device> m_centronics;
 	required_device<bus::nabu::option_bus_device> m_bus;
+	memory_view m_mem_view;
 
 	output_finder<4> m_leds;
 

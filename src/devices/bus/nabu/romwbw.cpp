@@ -78,7 +78,10 @@ romwbw_device::romwbw_device(const machine_config &mconfig, const char *tag, dev
 	m_uart(*this, "uart"),
 	m_ppi(*this, "ppi"),
 	m_ata(*this, "ata"),
+	m_rbank(*this, "rbank%u", 0U),
+	m_wbank(*this, "wbank%u", 0U),
 	m_paging(false),
+	m_wbw_mode(false),
 	m_ppi_data(0),
 	m_ide_data(0xffff),
 	m_ppi_ctl(0)
@@ -132,10 +135,19 @@ void romwbw_device::device_start()
 {
 	m_ram = std::make_unique<uint8_t []>(RAM_SIZE);
 	std::fill_n(m_ram.get(), RAM_SIZE, 0);
+	m_dummy = std::make_unique<uint8_t []>(0x4000);
+
+	for (int i = 0; i < 4; i++) {
+		m_rbank[i]->configure_entries(0, 32, m_rom->base(), 0x4000);
+		m_rbank[i]->configure_entries(32, 32, m_ram.get(), 0x4000);
+		m_wbank[i]->configure_entries(0, 32, m_dummy.get(), 0);
+		m_wbank[i]->configure_entries(32, 32, m_ram.get(), 0x4000);
+	}
 
 	save_pointer(NAME(m_ram), RAM_SIZE);
 	save_item(NAME(m_page));
 	save_item(NAME(m_paging));
+	save_item(NAME(m_wbw_mode));
 	save_item(NAME(m_ppi_data));
 	save_item(NAME(m_ide_data));
 	save_item(NAME(m_ppi_ctl));
@@ -146,9 +158,16 @@ void romwbw_device::device_start()
 //-------------------------------------------------
 void romwbw_device::device_reset()
 {
+	m_wbw_mode = m_mode->read() != 0;
 	// the paging enable flip-flop is cleared by /RESET, the page registers are not
 	m_paging = false;
 	m_ppi_ctl = 0;
+	update_banks();
+}
+
+void romwbw_device::device_post_load()
+{
+	update_banks();
 }
 
 //-------------------------------------------------
@@ -166,77 +185,50 @@ void romwbw_device::write(offs_t offset, uint8_t data)
 //-------------------------------------------------
 //  memory
 //-------------------------------------------------
-bool romwbw_device::wbw_mode() const
+void romwbw_device::install_memory(memory_view::memory_view_entry &view)
 {
-	return m_mode->read() != 0;
+	for (int i = 0; i < 4; i++) {
+		const offs_t base = i * 0x4000;
+		view.install_read_bank(base, base + 0x3fff, m_rbank[i]);
+		view.install_write_bank(base, base + 0x3fff, m_wbank[i]);
+	}
 }
 
-uint32_t romwbw_device::physical(offs_t offset) const
+void romwbw_device::update_banks()
 {
-	const uint32_t page = m_paging ? (m_page[(offset >> 14) & 3] & 0x3f) : ((offset >> 14) & 3);
-	return (page << 14) | (offset & 0x3fff);
-}
-
-bool romwbw_device::mem_read(offs_t offset, uint8_t &data)
-{
-	if (!wbw_mode()) {
-		return false;
+	for (int i = 0; i < 4; i++) {
+		const int page = m_paging ? (m_page[i] & 0x3f) : i;
+		m_rbank[i]->set_entry(page);
+		m_wbank[i]->set_entry(page);
 	}
-
-	const uint32_t addr = physical(offset);
-	data = (addr < ROM_SIZE) ? m_rom->base()[addr] : m_ram[addr - ROM_SIZE];
-	return true;
-}
-
-bool romwbw_device::mem_write(offs_t offset, uint8_t data)
-{
-	if (!wbw_mode()) {
-		return false;
-	}
-
-	// the flash ROM is not programmable from here
-	const uint32_t addr = physical(offset);
-	if (addr >= ROM_SIZE) {
-		m_ram[addr - ROM_SIZE] = data;
-	}
-	return true;
 }
 
 //-------------------------------------------------
 //  I/O
 //-------------------------------------------------
-bool romwbw_device::io_read(offs_t port, uint8_t &data)
+void romwbw_device::install_io(address_space &space)
 {
-	if (port >= PORT_UART && port < PORT_UART + 8) {
-		data = m_uart->ins8250_r(port - PORT_UART);
-		return true;
-	}
-	if (port >= PORT_PPI && port < PORT_PPI + 4) {
-		data = m_ppi->read(port - PORT_PPI);
-		return true;
-	}
-	return false;
+	space.install_device(0x00, 0xff, *this, &romwbw_device::io_map);
 }
 
-bool romwbw_device::io_write(offs_t port, uint8_t data)
+void romwbw_device::io_map(address_map &map)
 {
-	if (port >= PORT_UART && port < PORT_UART + 8) {
-		m_uart->ins8250_w(port - PORT_UART, data);
-		return true;
-	}
-	if (port >= PORT_PPI && port < PORT_PPI + 4) {
-		m_ppi->write(port - PORT_PPI, data);
-		return true;
-	}
-	if (port >= PORT_MMU && port < PORT_MMU + 4) {
-		m_page[port - PORT_MMU] = data;
-		return true;
-	}
-	if (port == PORT_MMU + 4) {
-		m_paging = BIT(data, 0);
-		return true;
-	}
-	return false;
+	map(PORT_UART, PORT_UART + 7).rw(m_uart, FUNC(ns16550_device::ins8250_r), FUNC(ns16550_device::ins8250_w));
+	map(PORT_PPI, PORT_PPI + 3).rw(m_ppi, FUNC(i8255_device::read), FUNC(i8255_device::write));
+	map(PORT_MMU, PORT_MMU + 3).w(FUNC(romwbw_device::page_w));
+	map(PORT_MMU + 4, PORT_MMU + 4).w(FUNC(romwbw_device::paging_w));
+}
+
+void romwbw_device::page_w(offs_t offset, uint8_t data)
+{
+	m_page[offset] = data;
+	update_banks();
+}
+
+void romwbw_device::paging_w(uint8_t data)
+{
+	m_paging = BIT(data, 0);
+	update_banks();
 }
 
 //-------------------------------------------------

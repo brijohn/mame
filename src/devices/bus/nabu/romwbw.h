@@ -53,15 +53,15 @@ public:
 
 	// Z80 socket
 	virtual bool cpu_socket() const override { return true; }
-	virtual bool mem_read(offs_t offset, uint8_t &data) override;
-	virtual bool mem_write(offs_t offset, uint8_t data) override;
-	virtual bool io_read(offs_t port, uint8_t &data) override;
-	virtual bool io_write(offs_t port, uint8_t data) override;
+	virtual void install_memory(memory_view::memory_view_entry &view) override;
+	virtual void install_io(address_space &space) override;
+	virtual bool owns_memory() const override { return m_wbw_mode; }
 
 protected:
 	// device-level overrides
 	virtual void device_start() override ATTR_COLD;
 	virtual void device_reset() override ATTR_COLD;
+	virtual void device_post_load() override ATTR_COLD;
 
 	// optional information overrides
 	virtual void device_add_mconfig(machine_config &config) override ATTR_COLD;
@@ -72,8 +72,10 @@ private:
 	static constexpr size_t ROM_SIZE = 0x80000;
 	static constexpr size_t RAM_SIZE = 0x80000;
 
-	bool wbw_mode() const;
-	uint32_t physical(offs_t offset) const;
+	void io_map(address_map &map) ATTR_COLD;
+	void page_w(offs_t offset, uint8_t data);
+	void paging_w(uint8_t data);
+	void update_banks();
 
 	void ppi_pa_w(uint8_t data) { m_ppi_data = (m_ppi_data & 0xff00) | data; }
 	void ppi_pb_w(uint8_t data) { m_ppi_data = (m_ppi_data & 0x00ff) | (uint16_t(data) << 8); }
@@ -86,10 +88,14 @@ private:
 	required_device<ns16550_device> m_uart;
 	required_device<i8255_device> m_ppi;
 	required_device<ata_interface_device> m_ata;
+	memory_bank_array_creator<4> m_rbank;
+	memory_bank_array_creator<4> m_wbank;
 
 	std::unique_ptr<uint8_t []> m_ram;
+	std::unique_ptr<uint8_t []> m_dummy;
 	uint8_t m_page[4];
 	bool m_paging;
+	bool m_wbw_mode;
 
 	uint16_t m_ppi_data;   // written by the CPU through ports A and B
 	uint16_t m_ide_data;   // read from the drive, returned through ports A and B

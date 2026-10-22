@@ -117,21 +117,21 @@ public:
 	option_slot_device* operator[](int index) const {assert(index < m_slot_list.size()); return m_slot_list[index]; }
 
 	// Cards that plug into the Z80 socket (see device_option_expansion_interface::cpu_socket)
-	// get first refusal on memory accesses and on I/O ports outside the four slot windows.
-	bool mem_read(offs_t offset, uint8_t &data);
-	bool mem_write(offs_t offset, uint8_t data);
-	bool socket_io_read(offs_t port, uint8_t &data);
-	bool socket_io_write(offs_t port, uint8_t data);
+	// fill the socket's memory view and install their I/O ports into the CPU's I/O space.
+	void install_socket(memory_view::memory_view_entry &view);
+	void install_socket_io(address_space &space);
+	bool socket_owns_memory() const;
 
 protected:
 	// device-level overrides
 	virtual void device_start() override;
 	virtual void device_reset() override;
 
+	static device_option_expansion_interface *socket_card(option_slot_device *slot);
+
 	devcb_write_line::array<5> m_int_cb;
 
 	std::vector<option_slot_device *> m_slot_list;
-	std::vector<device_option_expansion_interface *> m_socket_cards;
 };
 
 
@@ -145,13 +145,12 @@ public:
 	virtual void write(offs_t offset, uint8_t data) = 0;
 
 	// A card that also plugs into the Z80 socket (e.g. the RomWBW card) returns true here and
-	// may then claim memory accesses (returning true from mem_*) and I/O ports anywhere in the
-	// 0x00-0xff range (returning true from io_*).
+	// may then install its memory into the socket's view, take over the memory bus (returning
+	// true from owns_memory) and install I/O ports anywhere in the 0x00-0xff range.
 	virtual bool cpu_socket() const { return false; }
-	virtual bool mem_read(offs_t offset, uint8_t &data) { return false; }
-	virtual bool mem_write(offs_t offset, uint8_t data) { return false; }
-	virtual bool io_read(offs_t port, uint8_t &data) { return false; }
-	virtual bool io_write(offs_t port, uint8_t data) { return false; }
+	virtual void install_memory(memory_view::memory_view_entry &view) { }
+	virtual void install_io(address_space &space) { }
+	virtual bool owns_memory() const { return false; }
 
 protected:
 	device_option_expansion_interface(const machine_config &mconfig, device_t &device);
