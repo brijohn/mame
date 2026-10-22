@@ -427,11 +427,16 @@ void nabupc_state::update_irq()
 
 // Boot a segment the way the IPL leaves things once it has loaded pack 000001: the
 // payload at 0x140D, the ROM banked out, the keyboard UART configured, the PSG mixer
-// set, interrupts disabled, then entry at 0x1410 (the first three bytes are a header).
+// set, interrupts disabled in mode 2, then entry at 0x1410 (the first three bytes are a header).
 image_init_result nabupc_state::quickload_cb(device_image_interface &image)
 {
 	constexpr offs_t LOAD_ADDRESS = 0x140d;
 	constexpr offs_t ENTRY_ADDRESS = 0x1410;
+
+	if (m_bus->socket_owns_memory()) {
+		image.seterror(image_error::UNSUPPORTED, "Cannot quickload while a CPU socket card owns memory");
+		return image_init_result::FAIL;
+	}
 
 	const uint64_t size = image.length();
 	// as far as the IPL loads: up to the top of RAM, less the two marker bytes it writes at FFFE/FFFF
@@ -471,7 +476,7 @@ image_init_result nabupc_state::quickload_cb(device_image_interface &image)
 
 	m_maincpu->set_state_int(Z80_IFF1, 0);
 	m_maincpu->set_state_int(Z80_IFF2, 0);
-	m_maincpu->set_state_int(Z80_IM, 0);
+	m_maincpu->set_state_int(Z80_IM, 2);
 	m_maincpu->set_state_int(Z80_SP, 0xffee);
 	m_maincpu->set_pc(ENTRY_ADDRESS);
 
