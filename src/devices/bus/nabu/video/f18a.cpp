@@ -445,12 +445,21 @@ uint8_t pico9918_card_base::read(offs_t offset)
 
 	if (BIT(offset, 0))
 	{
+		if (machine().side_effects_disabled())
+		{
+			const uint8_t reg = pico9918_unlocked(tms9918)
+			                   ? (pico9918_reg_value(tms9918, PICO9918_REG_STATUS_SELECT) & PICO9918_R15_STATUS_NUM)
+			                   : 0;
+			return pico9918_status_value(tms9918, static_cast<pico9918_status_register_t>(reg));
+		}
 		data = pico9918_read_status(tms9918);
 		update_int();
 	}
 	else
 	{
-		data = pico9918_read_data(tms9918);
+		data = machine().side_effects_disabled()
+		                ? pico9918_read_data_no_inc(tms9918)
+		                : pico9918_read_data(tms9918);
 	}
 	return data;
 }
@@ -458,6 +467,9 @@ uint8_t pico9918_card_base::read(offs_t offset)
 void pico9918_card_base::write(offs_t offset, uint8_t data)
 {
 	pico9918_t *const tms9918 = m_vdp;
+
+	if (machine().side_effects_disabled())
+		return;
 
 	if (BIT(offset, 0))
 		pico9918_write_addr(tms9918, data);
