@@ -16,6 +16,7 @@
 #include "machine/clock.h"
 #include "emuopts.h"
 #include "imagedev/snapquik.h"
+#include "romload.h"
 
 #include "nabupc.lh"
 
@@ -290,8 +291,13 @@ void nabupc_state::machine_reset()
 	m_porta = 0;
 	m_portb = 0;
 	m_control = 0;
-	// The size follows the selected BIOS: revb and ver29 are 8k images (system_bios() is 1-based).
-	m_bios_size = (system_bios() == 4 || system_bios() == 5) ? 0x2000 : 0x1000;
+	// The size follows the image loaded for the selected BIOS (system_bios() is 1-based, as are the ROM_BIOS flags).
+	m_bios_size = 0x1000;
+	for (const rom_entry &entry : rom_region_vector()) {
+		if (ROMENTRY_ISFILE(entry) && ROM_GETBIOSFLAGS(entry) == system_bios()) {
+			m_bios_size = ROM_GETLENGTH(entry);
+		}
+	}
 	m_leds[0] = 1; // Power LED
 	if (m_bus->socket_owns_memory()) {
 		m_mem_view.select(0);
