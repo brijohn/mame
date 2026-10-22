@@ -1216,12 +1216,15 @@ project "bimg"
 		buildoptions {
 			"-Wno-unused-but-set-variable",
 		}
+
+	configuration { }
+
+	if _OPTIONS["gcc"]~=nil and not (string.find(_OPTIONS["gcc"], "clang") or string.find(_OPTIONS["gcc"], "asmjs") or string.find(_OPTIONS["gcc"], "android")) and str_to_version(_OPTIONS["gcc_version"]) >= 140000 then
 		buildoptions_cpp {
 			-- astc-codec names constructors with template-ids, an error in C++20 on GCC 14+
 			"-Wno-template-id-cdtor",
 		}
-
-	configuration { }
+	end
 
 	if _OPTIONS["targetos"]=="macosx" or _OPTIONS["targetos"]=="linux" or _OPTIONS["targetos"]=="windows" or _OPTIONS["targetos"]=="asmjs" then
 		if _OPTIONS["gcc"]~=nil and (string.find(_OPTIONS["gcc"], "clang") or string.find(_OPTIONS["gcc"], "asmjs")) then
@@ -2181,6 +2184,7 @@ end
 -- pico9918-core library objects (F18A / PICO9918 VDP)
 --------------------------------------------------
 
+if (BUSES["NABU_VIDEO"]~=null) then
 project "pico9918core"
 	uuid "6b0d2a4e-3f1c-4d57-9a68-2c5e8f7a1b93"
 	kind "StaticLib"
@@ -2218,6 +2222,7 @@ project "pico9918core"
 		MAME_DIR .. "3rdparty/pico9918-core/src/gpu/gpu.c",
 		MAME_DIR .. "3rdparty/pico9918-core/src/gpu/tms9900.c",
 	}
+end
 
 
 --------------------------------------------------

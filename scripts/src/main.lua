@@ -163,8 +163,12 @@ end
 		ext_lib("zlib"),
 		ext_lib("flac"),
 		ext_lib("utf8proc"),
+	}
+if (BUSES["NABU_VIDEO"]~=null) then
+	links {
 		"pico9918core",
 	}
+end
 if (STANDALONE~=true) then
 	links {
 		ext_lib("sqlite3"),
