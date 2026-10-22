@@ -115,7 +115,7 @@ PICO9918_NOINLINE void pico9918_palette_regenerate(PICO9918_INST_ONLY_ARG)
       pico9918_aliasing_u32_t* dest    = (pico9918_aliasing_u32_t*)PICO9918_ASSUME_ALIGNED(tmpPal + i, 4);
       *dest                     = packed;
     }
-    for (int high = 1; high < 16; ++high)
+    for (int high = 0; high < 16; ++high)
     {
       const uint32_t highPixel      = tmpPal[high];
       PICO9918_PALETTE_LUT_T* dest    = pico9918_palette_lut + (high << 4);
