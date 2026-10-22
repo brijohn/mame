@@ -43,6 +43,7 @@ constexpr uint8_t CTL_CS0 = 0x08;
 constexpr uint8_t CTL_CS1 = 0x10;
 constexpr uint8_t CTL_DIOW = 0x20;
 constexpr uint8_t CTL_DIOR = 0x40;
+constexpr uint8_t CTL_RESET = 0x80;
 
 INPUT_PORTS_START( romwbw )
 	PORT_START("MODE")
@@ -260,6 +261,11 @@ void romwbw_device::ppi_pc_w(uint8_t data)
 		} else if (data & CTL_CS1) {
 			m_ata->cs1_w(reg, m_ppi_data, mask);
 		}
+	}
+
+	// the drive is held in reset while the line is asserted
+	if (data & CTL_RESET) {
+		m_ata->reset();
 	}
 }
 
