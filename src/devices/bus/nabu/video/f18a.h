@@ -69,6 +69,7 @@ private:
 	void update_int();
 	bool has_config() const;
 	uint8_t hw_version() const;
+	uint32_t gpu_ips() const;
 
 	static void config_saved_cb(pico9918_t *inst, uint8_t *live, uint8_t key, void *userdata);
 	static void config_reload_cb(pico9918_t *inst, void *userdata);

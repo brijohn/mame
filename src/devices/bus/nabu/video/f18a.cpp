@@ -116,6 +116,20 @@ uint8_t pico9918_card_base::hw_version() const
 	return (m_chip == PICO9918_CHIP_PICO9918_PRO) ? 0x20 : 0x10;
 }
 
+uint32_t pico9918_card_base::gpu_ips() const
+{
+	switch (m_chip)
+	{
+	case PICO9918_CHIP_F18A:
+		return PICO9918_GPU_IPS_F18A;
+	case PICO9918_CHIP_PICO9918:
+		return PICO9918_GPU_IPS_CLASSIC;
+	case PICO9918_CHIP_PICO9918_PRO:
+	default:
+		return PICO9918_GPU_IPS_PRO;
+	}
+}
+
 //-------------------------------------------------
 //  device_start - device-specific startup
 //-------------------------------------------------
@@ -199,7 +213,7 @@ void pico9918_card_base::device_reset()
 	seed();
 	configure();
 
-	pico9918_gpu_set_clock(tms9918, PICO9918_GPU_IPS_PRO);
+	pico9918_gpu_set_clock(tms9918, gpu_ips());
 
 	m_int_state = 0;
 	m_slot->int_w(0);
