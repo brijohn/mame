@@ -156,6 +156,16 @@ void device_option_expansion_interface::interface_pre_start()
 {
 	if (!m_bus || m_slot == -1)
 		throw device_missing_dependencies();
+
+	// only one card may plug into the Z80 socket
+	if (cpu_socket()) {
+		for (device_option_expansion_interface &card : device_interface_enumerator<device_option_expansion_interface>(device().machine().root_device())) {
+			if (&card == this)
+				break;
+			if (card.cpu_socket())
+				throw emu_fatalerror(EMU_ERR_INVALID_CONFIG, "%s: the Z80 socket is already occupied by %s\n", device().tag(), card.device().tag());
+		}
+	}
 }
 
 //-------------------------------------------------
